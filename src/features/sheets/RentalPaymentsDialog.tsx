@@ -12,6 +12,8 @@ import { useSaveSheetPayment, useSheetPayments } from './hooks'
 import { netRentPaise, rentalOutstandingPaise, variantLabel } from './sheetEngine'
 import { makeSheetPaymentSchema, toSheetPaymentInput, type SheetPaymentFormValues } from './sheetForms'
 import { sheetSubmitError } from './submitError'
+import { FormSelect } from '../../components/forms/Select'
+import { FormDatePicker } from '../../components/forms/DatePicker'
 
 const methodLabel = (k: string | null) => PAYMENT_METHODS.find((m) => m.value === k)?.label
 
@@ -22,7 +24,7 @@ function PaymentForm({ rental, editing, onSaved, onCancelEdit }: {
   // Most this payment can be: the outstanding rent, plus the old amount when editing.
   const maxPaise = rentalOutstandingPaise(rental) + (editing?.amountPaise ?? 0)
   const schema = useMemo(() => makeSheetPaymentSchema(maxPaise, rental.rentalDate), [maxPaise, rental.rentalDate])
-  const { register, handleSubmit, formState: { errors } } = useForm<SheetPaymentFormValues>({
+  const { register, handleSubmit, control, formState: { errors } } = useForm<SheetPaymentFormValues>({
     resolver: zodResolver(schema),
     defaultValues: editing
       ? { paymentDate: editing.paymentDate, amount: (editing.amountPaise / 100).toFixed(2), paymentMethod: editing.paymentMethod ?? '', notes: editing.notes ?? '' }
@@ -38,13 +40,13 @@ function PaymentForm({ rental, editing, onSaved, onCancelEdit }: {
         <input {...register('amount')} {...fieldA11y('sp-amount', errors.amount?.message, true)} data-autofocus inputMode="decimal" autoComplete="off" placeholder="0.00" className={inputClass} />
       </FormField>
       <FormField id="sp-date" label="Payment date" error={errors.paymentDate?.message}>
-        <input type="date" {...register('paymentDate')} {...fieldA11y('sp-date', errors.paymentDate?.message)} className={inputClass} />
+        <FormDatePicker control={control} name="paymentDate" {...fieldA11y('sp-date', errors.paymentDate?.message)} className={inputClass} />
       </FormField>
       <FormField id="sp-method" label="Payment method (optional)" error={errors.paymentMethod?.message}>
-        <select {...register('paymentMethod')} {...fieldA11y('sp-method', errors.paymentMethod?.message)} className={inputClass}>
+        <FormSelect control={control} name="paymentMethod" {...fieldA11y('sp-method', errors.paymentMethod?.message)} className={inputClass}>
           <option value="">Not specified</option>
           {PAYMENT_METHODS.map((m) => <option key={m.value} value={m.value}>{m.label}</option>)}
-        </select>
+        </FormSelect>
       </FormField>
       <FormField id="sp-notes" label="Notes (optional)" error={errors.notes?.message}>
         <input {...register('notes')} {...fieldA11y('sp-notes', errors.notes?.message)} autoComplete="off" className={inputClass} />

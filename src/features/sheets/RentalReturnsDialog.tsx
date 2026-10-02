@@ -10,13 +10,14 @@ import { useDeleteReturn, useRecordReturn, useSheetReturns } from './hooks'
 import { stillOutQuantity, variantLabel } from './sheetEngine'
 import { defaultSheetReturnValues, makeSheetReturnSchema, toSheetReturnInput, type SheetReturnFormValues } from './sheetForms'
 import { sheetSubmitError } from './submitError'
+import { FormDatePicker } from '../../components/forms/DatePicker'
 
 function ReturnForm({ rental, onSaved }: { rental: SheetRental; onSaved: () => void }) {
   const stillOut = stillOutQuantity(rental)
   const record = useRecordReturn(rental.id)
   const today = todayIST()
   const schema = useMemo(() => makeSheetReturnSchema(stillOut, rental.rentalDate, today), [stillOut, rental.rentalDate, today])
-  const { register, handleSubmit, formState: { errors } } = useForm<SheetReturnFormValues>({
+  const { register, handleSubmit, control, formState: { errors } } = useForm<SheetReturnFormValues>({
     resolver: zodResolver(schema), defaultValues: defaultSheetReturnValues(today, stillOut),
   })
   const onSubmit = handleSubmit(async (values) => {
@@ -26,7 +27,7 @@ function ReturnForm({ rental, onSaved }: { rental: SheetRental; onSaved: () => v
   return (
     <form onSubmit={onSubmit} noValidate className="grid grid-cols-1 gap-4 md:grid-cols-3" aria-label="Record return">
       <FormField id="sr-date" label="Return date" error={errors.returnDate?.message} className="md:col-span-3">
-        <input type="date" {...register('returnDate')} {...fieldA11y('sr-date', errors.returnDate?.message)} className={inputClass} />
+        <FormDatePicker control={control} name="returnDate" {...fieldA11y('sr-date', errors.returnDate?.message)} className={inputClass} />
       </FormField>
       <FormField id="sr-returned" label="Returned in good condition" error={errors.returned?.message}>
         <input {...register('returned')} {...fieldA11y('sr-returned', errors.returned?.message)} data-autofocus inputMode="numeric" autoComplete="off" className={inputClass} />

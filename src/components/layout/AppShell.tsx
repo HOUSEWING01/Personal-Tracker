@@ -55,6 +55,7 @@ export function AppShell() {
     document.title = item ? `${item.label} · Business Admin` : 'Business Admin'
     if (firstRender.current) { firstRender.current = false; return }
     mainRef.current?.focus({ preventScroll: true })
+    mainRef.current?.scrollTo({ top: 0 })
   }, [pathname])
 
   // Mobile menu: focus moves in, Tab stays inside, Esc closes, focus returns to the menu button.

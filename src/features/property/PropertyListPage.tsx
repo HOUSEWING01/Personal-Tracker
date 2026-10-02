@@ -13,6 +13,7 @@ import { PROPERTY_TYPE_LABELS } from './labels'
 import { isOccupied, propertyTotals } from './propertyEngine'
 import { Pill } from './StatusBadge'
 import { PropertyDialog } from './PropertyDialog'
+import { Select } from '../../components/forms/Select'
 
 const DEFAULTS = { q: '', status: 'all', page: '1' }
 const field = 'mt-1 w-full rounded-md border border-line bg-surface px-3 py-2 text-sm'
@@ -65,11 +66,11 @@ export function PropertyListPage() {
           <input type="search" value={qText} onChange={(e) => setQText(e.target.value)} className={field} />
         </label>
         <label className="col-span-2 text-sm font-medium md:col-span-1">Status
-          <select value={status ?? 'all'} onChange={(e) => update({ status: e.target.value })} className={field}>
+          <Select value={status ?? 'all'} onChange={(v) => update({ status: v })} className={field}>
             <option value="all">All</option>
             <option value="active">Active</option>
             <option value="inactive">Inactive</option>
-          </select>
+          </Select>
         </label>
       </form>
 

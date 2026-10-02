@@ -3,6 +3,7 @@ import { Plus } from '@phosphor-icons/react'
 import { EmptyState } from '../../components/ui/EmptyState'
 import { buttonPrimary, buttonSecondary } from '../../components/ui/FullScreenMessage'
 import { TRANSPORT_PAGE_SIZE } from './hooks'
+import { Select } from '../../components/forms/Select'
 
 export interface Column<T> {
   header: string
@@ -59,10 +60,10 @@ export function MasterList<T>(p: Props<T>) {
           </label>
           {p.status && (
             <label className="col-span-2 text-sm font-medium md:col-span-1">Status
-              <select value={p.status.value} onChange={(e) => p.status?.onChange(e.target.value)} className={field}>
+              <Select value={p.status.value} onChange={(v) => p.status?.onChange(v)} className={field}>
                 <option value="all">All</option>
                 {p.status.options.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
-              </select>
+              </Select>
             </label>
           )}
         </form>
@@ -123,16 +124,16 @@ export function MasterList<T>(p: Props<T>) {
                 <li key={p.rowKey(r)} className="rounded-md border border-line bg-surface px-4 py-3">
                   <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0 font-medium">{first?.cell(r)}</div>
-                    <span className="flex shrink-0 gap-2">
-                      {p.rowActions?.(r)}
-                      <button type="button" className={buttonSecondary} aria-label={`Edit ${p.rowLabel(r)}`} onClick={() => p.onEdit(r)}>Edit</button>
-                    </span>
                   </div>
                   <dl className="mt-2 grid grid-cols-2 gap-2 text-xs">
                     {rest.map((c) => (
                       <div key={c.header}><dt className="text-muted">{c.header}</dt><dd className="font-medium tabular-nums">{c.cell(r)}</dd></div>
                     ))}
                   </dl>
+                  <div className="mt-3 flex flex-wrap gap-2 border-t border-line pt-3">
+                    {p.rowActions?.(r)}
+                    <button type="button" className={buttonSecondary} aria-label={`Edit ${p.rowLabel(r)}`} onClick={() => p.onEdit(r)}>Edit</button>
+                  </div>
                 </li>
               ))}
             </ul>

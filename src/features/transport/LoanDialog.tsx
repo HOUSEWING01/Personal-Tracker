@@ -9,6 +9,8 @@ import { useSaveLoan, useTripOptions } from './hooks'
 import { LOAN_STATUS_LABELS } from './labels'
 import { transportSubmitError } from './submitError'
 import { defaultLoanValues, loanFormSchema, toLoanInput, type LoanFormValues } from './transportForms'
+import { FormSelect } from '../../components/forms/Select'
+import { FormDatePicker } from '../../components/forms/DatePicker'
 
 function initial(l?: VehicleLoan): LoanFormValues {
   if (!l) return defaultLoanValues(todayIST())
@@ -22,7 +24,7 @@ function initial(l?: VehicleLoan): LoanFormValues {
 function Form({ loan, onClose, onSaved }: { loan?: VehicleLoan; onClose: () => void; onSaved: () => void }) {
   const save = useSaveLoan(loan?.id)
   const options = useTripOptions()
-  const { register, handleSubmit, formState: { errors } } = useForm<LoanFormValues>({
+  const { register, handleSubmit, control, formState: { errors } } = useForm<LoanFormValues>({
     resolver: zodResolver(loanFormSchema), defaultValues: initial(loan),
   })
 
@@ -37,16 +39,16 @@ function Form({ loan, onClose, onSaved }: { loan?: VehicleLoan; onClose: () => v
         <input {...register('lender')} {...fieldA11y('ln-lender', errors.lender?.message)} data-autofocus autoComplete="off" className={inputClass} />
       </FormField>
       <FormField id="ln-vehicle" label="Vehicle (optional)" error={errors.vehicleId?.message} hint="The vehicle this loan financed.">
-        <select {...register('vehicleId')} {...fieldA11y('ln-vehicle', errors.vehicleId?.message, true)} className={inputClass} disabled={options.isLoading}>
+        <FormSelect control={control} name="vehicleId" {...fieldA11y('ln-vehicle', errors.vehicleId?.message, true)} className={inputClass} disabled={options.isLoading}>
           <option value="">Not linked to a vehicle</option>
           {(options.data?.vehicles ?? []).map((v) => <option key={v.id} value={v.id}>{v.name} ({v.registrationNumber})</option>)}
-        </select>
+        </FormSelect>
       </FormField>
       <FormField id="ln-principal" label="Amount received (₹)" error={errors.principal?.message}>
         <input {...register('principal')} {...fieldA11y('ln-principal', errors.principal?.message)} inputMode="decimal" autoComplete="off" placeholder="0.00" className={inputClass} />
       </FormField>
       <FormField id="ln-start" label="Start date" error={errors.startDate?.message}>
-        <input type="date" {...register('startDate')} {...fieldA11y('ln-start', errors.startDate?.message)} className={inputClass} />
+        <FormDatePicker control={control} name="startDate" {...fieldA11y('ln-start', errors.startDate?.message)} className={inputClass} />
       </FormField>
       <FormField id="ln-rate" label="Interest rate (% per year)" error={errors.interestRate?.message} hint="For reference only. Nothing is calculated from it.">
         <input {...register('interestRate')} {...fieldA11y('ln-rate', errors.interestRate?.message, true)} inputMode="decimal" autoComplete="off" placeholder="0" className={inputClass} />
@@ -58,9 +60,9 @@ function Form({ loan, onClose, onSaved }: { loan?: VehicleLoan; onClose: () => v
         <input {...register('tenureMonths')} {...fieldA11y('ln-tenure', errors.tenureMonths?.message)} inputMode="numeric" autoComplete="off" className={inputClass} />
       </FormField>
       <FormField id="ln-status" label="Status" error={errors.status?.message}>
-        <select {...register('status')} {...fieldA11y('ln-status', errors.status?.message)} className={inputClass}>
+        <FormSelect control={control} name="status" {...fieldA11y('ln-status', errors.status?.message)} className={inputClass}>
           {LOAN_STATUSES.map((s) => <option key={s} value={s}>{LOAN_STATUS_LABELS[s]}</option>)}
-        </select>
+        </FormSelect>
       </FormField>
       <div className="rounded-md bg-canvas px-3 py-2 text-xs text-muted md:col-span-2">
         Saving records the amount received in Finance as a loan received, dated the start date. Editing the loan later updates that entry.

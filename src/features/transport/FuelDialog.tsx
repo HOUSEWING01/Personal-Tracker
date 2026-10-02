@@ -11,6 +11,8 @@ import { useSaveFuelLog, useTripChoices, useTripOptions } from './hooks'
 import { transportSubmitError } from './submitError'
 import { fuelTotalPaise } from './transportEngine'
 import { defaultFuelValues, fuelFormSchema, parseKmHundredths, toFuelInput, type FuelFormValues } from './transportForms'
+import { FormSelect } from '../../components/forms/Select'
+import { FormDatePicker } from '../../components/forms/DatePicker'
 
 function initial(f?: FuelLog): FuelFormValues {
   if (!f) return defaultFuelValues(todayIST())
@@ -24,7 +26,7 @@ function Form({ fuel, onClose, onSaved }: { fuel?: FuelLog; onClose: () => void;
   const save = useSaveFuelLog(fuel?.id)
   const options = useTripOptions()
   const trips = useTripChoices()
-  const { register, handleSubmit, watch, setValue, formState: { errors } } = useForm<FuelFormValues>({
+  const { register, handleSubmit, control, watch, setValue, formState: { errors } } = useForm<FuelFormValues>({
     resolver: zodResolver(fuelFormSchema), defaultValues: initial(fuel),
   })
   const [vehicleId, litres, price] = watch(['vehicleId', 'litres', 'pricePerLitre'])
@@ -64,13 +66,13 @@ function Form({ fuel, onClose, onSaved }: { fuel?: FuelLog; onClose: () => void;
   return (
     <form onSubmit={onSubmit} noValidate className="grid grid-cols-1 gap-4 md:grid-cols-2">
       <FormField id="fu-vehicle" label="Vehicle" error={errors.vehicleId?.message}>
-        <select {...register('vehicleId', { onChange: () => setValue('tripId', '') })} {...fieldA11y('fu-vehicle', errors.vehicleId?.message)} data-autofocus className={inputClass}>
+        <FormSelect control={control} name="vehicleId" onValueChange={() => setValue('tripId', '')} {...fieldA11y('fu-vehicle', errors.vehicleId?.message)} data-autofocus className={inputClass}>
           <option value="">Choose a vehicle</option>
           {vehicles.map((v) => <option key={v.id} value={v.id}>{v.name} ({v.registrationNumber})</option>)}
-        </select>
+        </FormSelect>
       </FormField>
       <FormField id="fu-date" label="Date" error={errors.fuelDate?.message}>
-        <input type="date" {...register('fuelDate')} {...fieldA11y('fu-date', errors.fuelDate?.message)} className={inputClass} />
+        <FormDatePicker control={control} name="fuelDate" {...fieldA11y('fu-date', errors.fuelDate?.message)} className={inputClass} />
       </FormField>
       <FormField id="fu-litres" label="Litres" error={errors.litres?.message}>
         <input {...register('litres')} {...fieldA11y('fu-litres', errors.litres?.message)} inputMode="decimal" autoComplete="off" placeholder="0" className={inputClass} />
@@ -87,10 +89,10 @@ function Form({ fuel, onClose, onSaved }: { fuel?: FuelLog; onClose: () => void;
         <input {...register('odometerKm')} {...fieldA11y('fu-odo', errors.odometerKm?.message)} inputMode="numeric" autoComplete="off" className={inputClass} />
       </FormField>
       <FormField id="fu-trip" label="Trip (optional)" error={errors.tripId?.message} hint="Link this fuel to a trip so it counts in that trip's profit.">
-        <select {...register('tripId')} {...fieldA11y('fu-trip', errors.tripId?.message, true)} className={inputClass} disabled={!vehicleId}>
+        <FormSelect control={control} name="tripId" {...fieldA11y('fu-trip', errors.tripId?.message, true)} className={inputClass} disabled={!vehicleId}>
           <option value="">Not linked to a trip</option>
           {tripsForVehicle.map((t) => <option key={t.id} value={t.id}>{t.label}</option>)}
-        </select>
+        </FormSelect>
       </FormField>
       <FormField id="fu-notes" label="Notes (optional)" error={errors.notes?.message} className="md:col-span-2">
         <input {...register('notes')} {...fieldA11y('fu-notes', errors.notes?.message)} autoComplete="off" className={inputClass} />

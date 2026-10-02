@@ -7,6 +7,8 @@ import { BUSINESS_MODULES, MANUAL_TRANSACTION_TYPES } from '../../types/finance'
 import { useCreateTransaction } from './hooks'
 import { MODULE_LABELS, PAYMENT_METHODS, TYPE_LABELS } from './labels'
 import { defaultFormValues, toNewTransaction, transactionFormSchema, type TransactionFormValues } from './transactionForm'
+import { FormSelect } from '../../components/forms/Select'
+import { FormDatePicker } from '../../components/forms/DatePicker'
 
 function submitErrorMessage(e: unknown): string {
   const msg = e instanceof Error ? e.message.toLowerCase() : ''
@@ -16,7 +18,7 @@ function submitErrorMessage(e: unknown): string {
 
 function Form({ onClose, onSaved }: { onClose: () => void; onSaved: () => void }) {
   const create = useCreateTransaction()
-  const { register, handleSubmit, watch, formState: { errors } } = useForm<TransactionFormValues>({
+  const { register, handleSubmit, control, watch, formState: { errors } } = useForm<TransactionFormValues>({
     resolver: zodResolver(transactionFormSchema),
     defaultValues: defaultFormValues(),
   })
@@ -33,27 +35,27 @@ function Form({ onClose, onSaved }: { onClose: () => void; onSaved: () => void }
   return (
     <form onSubmit={onSubmit} noValidate className="grid grid-cols-1 gap-4 md:grid-cols-2">
       <FormField id="tx-type" label="Type" error={errors.type?.message}>
-        <select {...register('type')} {...fieldA11y('tx-type', errors.type?.message)} data-autofocus className={inputClass}>
+        <FormSelect control={control} name="type" {...fieldA11y('tx-type', errors.type?.message)} data-autofocus className={inputClass}>
           {MANUAL_TRANSACTION_TYPES.map((t) => <option key={t} value={t}>{TYPE_LABELS[t]}</option>)}
-        </select>
+        </FormSelect>
       </FormField>
       <FormField id="tx-module" label="Module" error={errors.module?.message}>
-        <select {...register('module')} {...fieldA11y('tx-module', errors.module?.message)} className={inputClass}>
+        <FormSelect control={control} name="module" {...fieldA11y('tx-module', errors.module?.message)} className={inputClass}>
           {BUSINESS_MODULES.map((m) => <option key={m} value={m}>{MODULE_LABELS[m]}</option>)}
-        </select>
+        </FormSelect>
       </FormField>
       <FormField id="tx-amount" label="Amount (₹)" error={errors.amount?.message}
         hint={isAdjustment ? 'Use a minus sign to deduct, for example -250.50.' : 'Up to 2 decimals.'}>
         <input {...register('amount')} {...fieldA11y('tx-amount', errors.amount?.message, true)} inputMode="decimal" autoComplete="off" placeholder="0.00" className={inputClass} />
       </FormField>
       <FormField id="tx-date" label="Date" error={errors.date?.message}>
-        <input type="date" {...register('date')} {...fieldA11y('tx-date', errors.date?.message)} className={inputClass} />
+        <FormDatePicker control={control} name="date" {...fieldA11y('tx-date', errors.date?.message)} className={inputClass} />
       </FormField>
       <FormField id="tx-method" label="Payment method (optional)" error={errors.paymentMethod?.message}>
-        <select {...register('paymentMethod')} {...fieldA11y('tx-method', errors.paymentMethod?.message)} className={inputClass}>
+        <FormSelect control={control} name="paymentMethod" {...fieldA11y('tx-method', errors.paymentMethod?.message)} className={inputClass}>
           <option value="">Not specified</option>
           {PAYMENT_METHODS.map((m) => <option key={m.value} value={m.value}>{m.label}</option>)}
-        </select>
+        </FormSelect>
       </FormField>
       <FormField id="tx-desc" label={isAdjustment ? 'Reason' : 'Description (optional)'} error={errors.description?.message} className="md:col-span-2">
         <input {...register('description')} {...fieldA11y('tx-desc', errors.description?.message)} autoComplete="off" className={inputClass} />

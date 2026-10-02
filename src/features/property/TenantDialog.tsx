@@ -7,6 +7,7 @@ import type { Tenant } from '../../types/property'
 import { useSaveTenant } from './hooks'
 import { defaultTenantValues, tenantFormSchema, toTenantInput, type TenantFormValues } from './propertyForms'
 import { submitError } from './submitError'
+import { FormDatePicker } from '../../components/forms/DatePicker'
 
 function initial(t: Tenant | null): TenantFormValues {
   if (!t) return defaultTenantValues()
@@ -18,7 +19,7 @@ function initial(t: Tenant | null): TenantFormValues {
 
 function Form({ propertyId, tenant, onClose, onSaved }: { propertyId: string; tenant: Tenant | null; onClose: () => void; onSaved: () => void }) {
   const save = useSaveTenant(propertyId)
-  const { register, handleSubmit, formState: { errors } } = useForm<TenantFormValues>({
+  const { register, handleSubmit, control, formState: { errors } } = useForm<TenantFormValues>({
     resolver: zodResolver(tenantFormSchema), defaultValues: initial(tenant),
   })
   const onSubmit = handleSubmit(async (values) => {
@@ -34,10 +35,10 @@ function Form({ propertyId, tenant, onClose, onSaved }: { propertyId: string; te
         <input {...register('mobile')} {...fieldA11y('tn-mobile', errors.mobile?.message, true)} inputMode="numeric" autoComplete="off" className={inputClass} />
       </FormField>
       <FormField id="tn-start" label="Rental start date" error={errors.rentalStartDate?.message} hint="Rent is created from this month.">
-        <input type="date" {...register('rentalStartDate')} {...fieldA11y('tn-start', errors.rentalStartDate?.message, true)} className={inputClass} />
+        <FormDatePicker control={control} name="rentalStartDate" {...fieldA11y('tn-start', errors.rentalStartDate?.message, true)} className={inputClass} />
       </FormField>
       <FormField id="tn-end" label="Rental end date (optional)" error={errors.rentalEndDate?.message} hint="Leave empty while the tenancy continues.">
-        <input type="date" {...register('rentalEndDate')} {...fieldA11y('tn-end', errors.rentalEndDate?.message, true)} className={inputClass} />
+        <FormDatePicker control={control} name="rentalEndDate" {...fieldA11y('tn-end', errors.rentalEndDate?.message, true)} className={inputClass} />
       </FormField>
       <FormField id="tn-address" label="Address (optional)" error={errors.address?.message} className="md:col-span-2">
         <input {...register('address')} {...fieldA11y('tn-address', errors.address?.message)} autoComplete="off" className={inputClass} />

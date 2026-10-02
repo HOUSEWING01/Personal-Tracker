@@ -8,12 +8,13 @@ import { useSaveProduct } from './hooks'
 import { ACTIVE_STATUS_LABELS } from './labels'
 import { defaultProductValues, productFormSchema, toProductInput, type ProductFormValues } from './sheetForms'
 import { sheetSubmitError } from './submitError'
+import { FormSelect } from '../../components/forms/Select'
 
 const initial = (p?: SheetProduct): ProductFormValues => (p ? { name: p.name, status: p.status, notes: p.notes ?? '' } : defaultProductValues())
 
 function Form({ product, onClose, onSaved }: { product?: SheetProduct; onClose: () => void; onSaved: () => void }) {
   const save = useSaveProduct(product?.id)
-  const { register, handleSubmit, formState: { errors } } = useForm<ProductFormValues>({ resolver: zodResolver(productFormSchema), defaultValues: initial(product) })
+  const { register, handleSubmit, control, formState: { errors } } = useForm<ProductFormValues>({ resolver: zodResolver(productFormSchema), defaultValues: initial(product) })
   const onSubmit = handleSubmit(async (values) => {
     if (save.isPending) return
     try { await save.mutateAsync(toProductInput(values)); onSaved() } catch { /* shown via save.isError */ }
@@ -24,9 +25,9 @@ function Form({ product, onClose, onSaved }: { product?: SheetProduct; onClose: 
         <input {...register('name')} {...fieldA11y('pr-name', errors.name?.message, true)} data-autofocus autoComplete="off" className={inputClass} />
       </FormField>
       <FormField id="pr-status" label="Status" error={errors.status?.message}>
-        <select {...register('status')} {...fieldA11y('pr-status', errors.status?.message)} className={inputClass}>
+        <FormSelect control={control} name="status" {...fieldA11y('pr-status', errors.status?.message)} className={inputClass}>
           {(['active', 'inactive'] as const).map((s) => <option key={s} value={s}>{ACTIVE_STATUS_LABELS[s]}</option>)}
-        </select>
+        </FormSelect>
       </FormField>
       <FormField id="pr-notes" label="Notes (optional)" error={errors.notes?.message} className="md:col-span-2">
         <input {...register('notes')} {...fieldA11y('pr-notes', errors.notes?.message)} autoComplete="off" className={inputClass} />

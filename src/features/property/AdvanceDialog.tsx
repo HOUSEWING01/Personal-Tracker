@@ -9,11 +9,13 @@ import { useRecordAdvance } from './hooks'
 import { ADVANCE_KIND_LABELS } from './labels'
 import { defaultAdvanceValues, makeAdvanceSchema, toAdvanceInput, type AdvanceFormValues } from './propertyForms'
 import { submitError } from './submitError'
+import { FormSelect } from '../../components/forms/Select'
+import { FormDatePicker } from '../../components/forms/DatePicker'
 
 function Form({ propertyId, remainingPaise, onClose, onSaved }: { propertyId: string; remainingPaise: number; onClose: () => void; onSaved: () => void }) {
   const record = useRecordAdvance(propertyId)
   const schema = useMemo(() => makeAdvanceSchema(remainingPaise), [remainingPaise])
-  const { register, handleSubmit, formState: { errors } } = useForm<AdvanceFormValues>({
+  const { register, handleSubmit, control, formState: { errors } } = useForm<AdvanceFormValues>({
     resolver: zodResolver(schema), defaultValues: defaultAdvanceValues(),
   })
   const onSubmit = handleSubmit(async (values) => {
@@ -24,15 +26,15 @@ function Form({ propertyId, remainingPaise, onClose, onSaved }: { propertyId: st
     <form onSubmit={onSubmit} noValidate className="grid grid-cols-1 gap-4 md:grid-cols-2">
       <p className="text-sm text-muted md:col-span-2">Advance remaining: <strong className="text-ink">{formatINR(remainingPaise)}</strong></p>
       <FormField id="ad-kind" label="Movement" error={errors.kind?.message}>
-        <select {...register('kind')} {...fieldA11y('ad-kind', errors.kind?.message)} data-autofocus className={inputClass}>
+        <FormSelect control={control} name="kind" {...fieldA11y('ad-kind', errors.kind?.message)} data-autofocus className={inputClass}>
           {(['received', 'adjusted', 'returned'] as const).map((k) => <option key={k} value={k}>{ADVANCE_KIND_LABELS[k]}</option>)}
-        </select>
+        </FormSelect>
       </FormField>
       <FormField id="ad-amount" label="Amount (₹)" error={errors.amount?.message} hint="Up to 2 decimals.">
         <input {...register('amount')} {...fieldA11y('ad-amount', errors.amount?.message, true)} inputMode="decimal" autoComplete="off" placeholder="0.00" className={inputClass} />
       </FormField>
       <FormField id="ad-date" label="Date" error={errors.date?.message}>
-        <input type="date" {...register('date')} {...fieldA11y('ad-date', errors.date?.message)} className={inputClass} />
+        <FormDatePicker control={control} name="date" {...fieldA11y('ad-date', errors.date?.message)} className={inputClass} />
       </FormField>
       <FormField id="ad-notes" label="Notes (optional)" error={errors.notes?.message}>
         <input {...register('notes')} {...fieldA11y('ad-notes', errors.notes?.message)} autoComplete="off" className={inputClass} />

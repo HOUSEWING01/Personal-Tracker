@@ -12,6 +12,8 @@ import { TRIP_STATUS_LABELS } from './labels'
 import { transportSubmitError } from './submitError'
 import { tripOperatingProfitPaise, tripRevenuePaise } from './transportEngine'
 import { defaultTripValues, parseKmHundredths, toTripInput, tripFormSchema, type TripFormValues } from './transportForms'
+import { FormSelect } from '../../components/forms/Select'
+import { FormDatePicker } from '../../components/forms/DatePicker'
 
 function initial(t?: Trip): TripFormValues {
   if (!t) return defaultTripValues(todayIST())
@@ -40,7 +42,7 @@ function livePreview(distance: string, rate: string, driver: string, fuelPaise: 
 function Form({ trip, onClose, onSaved }: { trip?: Trip; onClose: () => void; onSaved: () => void }) {
   const save = useSaveTrip(trip?.id)
   const options = useTripOptions()
-  const { register, handleSubmit, watch, formState: { errors } } = useForm<TripFormValues>({
+  const { register, handleSubmit, control, watch, formState: { errors } } = useForm<TripFormValues>({
     resolver: zodResolver(tripFormSchema), defaultValues: initial(trip),
   })
   const [distance, rate, driverPay, status] = watch(['distanceKm', 'ratePerKm', 'driverPayment', 'status'])
@@ -82,22 +84,22 @@ function Form({ trip, onClose, onSaved }: { trip?: Trip; onClose: () => void; on
   return (
     <form onSubmit={onSubmit} noValidate className="grid grid-cols-1 gap-4 md:grid-cols-2">
       <FormField id="tr-vehicle" label="Vehicle" error={errors.vehicleId?.message}>
-        <select {...register('vehicleId')} {...fieldA11y('tr-vehicle', errors.vehicleId?.message)} data-autofocus className={inputClass}>
+        <FormSelect control={control} name="vehicleId" {...fieldA11y('tr-vehicle', errors.vehicleId?.message)} data-autofocus className={inputClass}>
           <option value="">Choose a vehicle</option>
           {vehicles.map((v) => <option key={v.id} value={v.id}>{v.name} ({v.registrationNumber})</option>)}
-        </select>
+        </FormSelect>
       </FormField>
       <FormField id="tr-driver" label="Driver" error={errors.driverId?.message}>
-        <select {...register('driverId')} {...fieldA11y('tr-driver', errors.driverId?.message)} className={inputClass}>
+        <FormSelect control={control} name="driverId" {...fieldA11y('tr-driver', errors.driverId?.message)} className={inputClass}>
           <option value="">Choose a driver</option>
           {drivers.map((d) => <option key={d.id} value={d.id}>{d.name}</option>)}
-        </select>
+        </FormSelect>
       </FormField>
       <FormField id="tr-customer" label="Customer" error={errors.customerId?.message} className="md:col-span-2">
-        <select {...register('customerId')} {...fieldA11y('tr-customer', errors.customerId?.message)} className={inputClass}>
+        <FormSelect control={control} name="customerId" {...fieldA11y('tr-customer', errors.customerId?.message)} className={inputClass}>
           <option value="">Choose a customer</option>
           {customers.map((c) => <option key={c.id} value={c.id}>{c.name}{c.mobile ? ` (${c.mobile})` : ''}</option>)}
-        </select>
+        </FormSelect>
       </FormField>
       <FormField id="tr-from" label="From" error={errors.fromLocation?.message}>
         <input {...register('fromLocation')} {...fieldA11y('tr-from', errors.fromLocation?.message)} autoComplete="off" className={inputClass} />
@@ -115,7 +117,7 @@ function Form({ trip, onClose, onSaved }: { trip?: Trip; onClose: () => void; on
         <input {...register('driverPayment')} {...fieldA11y('tr-driverpay', errors.driverPayment?.message, true)} inputMode="decimal" autoComplete="off" placeholder="0.00" className={inputClass} />
       </FormField>
       <FormField id="tr-date" label="Trip date" error={errors.tripDate?.message}>
-        <input type="date" {...register('tripDate')} {...fieldA11y('tr-date', errors.tripDate?.message)} className={inputClass} />
+        <FormDatePicker control={control} name="tripDate" {...fieldA11y('tr-date', errors.tripDate?.message)} className={inputClass} />
       </FormField>
       <div className="rounded-md bg-canvas px-3 py-2 text-sm md:col-span-2" aria-live="polite">
         <div><span className="text-muted">Revenue (distance × rate): </span><span className="font-medium tabular-nums">{formatINR(revenue)}</span></div>
@@ -131,9 +133,9 @@ function Form({ trip, onClose, onSaved }: { trip?: Trip; onClose: () => void; on
         </p>
       </div>
       <FormField id="tr-status" label="Status" error={errors.status?.message}>
-        <select {...register('status')} {...fieldA11y('tr-status', errors.status?.message)} className={inputClass}>
+        <FormSelect control={control} name="status" {...fieldA11y('tr-status', errors.status?.message)} className={inputClass}>
           {TRIP_STATUSES.map((s) => <option key={s} value={s}>{TRIP_STATUS_LABELS[s]}</option>)}
-        </select>
+        </FormSelect>
       </FormField>
       <FormField id="tr-notes" label="Notes (optional)" error={errors.notes?.message}>
         <input {...register('notes')} {...fieldA11y('tr-notes', errors.notes?.message)} autoComplete="off" className={inputClass} />

@@ -11,6 +11,8 @@ import { VEHICLE_STATUS_LABELS } from './labels'
 import { transportSubmitError } from './submitError'
 import { vehicleTotalInvestmentPaise } from './transportEngine'
 import { defaultVehicleValues, toVehicleInput, vehicleFormSchema, type VehicleFormValues } from './transportForms'
+import { FormSelect } from '../../components/forms/Select'
+import { FormDatePicker } from '../../components/forms/DatePicker'
 
 function initial(v?: Vehicle): VehicleFormValues {
   if (!v) return defaultVehicleValues()
@@ -31,7 +33,7 @@ function livePaise(s: string): number {
 
 function Form({ vehicle, onClose, onSaved }: { vehicle?: Vehicle; onClose: () => void; onSaved: () => void }) {
   const save = useSaveVehicle(vehicle?.id)
-  const { register, handleSubmit, watch, formState: { errors } } = useForm<VehicleFormValues>({
+  const { register, handleSubmit, control, watch, formState: { errors } } = useForm<VehicleFormValues>({
     resolver: zodResolver(vehicleFormSchema), defaultValues: initial(vehicle),
   })
   const [purchase, container] = watch(['purchasePrice', 'containerPrice'])
@@ -54,7 +56,7 @@ function Form({ vehicle, onClose, onSaved }: { vehicle?: Vehicle; onClose: () =>
         <input {...register('purchasePrice')} {...fieldA11y('vh-price', errors.purchasePrice?.message, true)} inputMode="decimal" autoComplete="off" placeholder="0.00" className={inputClass} />
       </FormField>
       <FormField id="vh-date" label="Purchase date" error={errors.purchaseDate?.message} hint="Finance records the investment on this date.">
-        <input type="date" {...register('purchaseDate')} {...fieldA11y('vh-date', errors.purchaseDate?.message, true)} className={inputClass} />
+        <FormDatePicker control={control} name="purchaseDate" {...fieldA11y('vh-date', errors.purchaseDate?.message, true)} className={inputClass} />
       </FormField>
       <FormField id="vh-cprice" label="Container price (₹)" error={errors.containerPrice?.message} hint="Leave blank if none.">
         <input {...register('containerPrice')} {...fieldA11y('vh-cprice', errors.containerPrice?.message, true)} inputMode="decimal" autoComplete="off" placeholder="0.00" className={inputClass} />
@@ -68,9 +70,9 @@ function Form({ vehicle, onClose, onSaved }: { vehicle?: Vehicle; onClose: () =>
         <p className="mt-1 text-xs text-muted">Saving records the purchase price and the container price in Finance as investments. Editing a price later updates those entries.</p>
       </div>
       <FormField id="vh-status" label="Status" error={errors.status?.message}>
-        <select {...register('status')} {...fieldA11y('vh-status', errors.status?.message)} className={inputClass}>
+        <FormSelect control={control} name="status" {...fieldA11y('vh-status', errors.status?.message)} className={inputClass}>
           {VEHICLE_STATUSES.map((s) => <option key={s} value={s}>{VEHICLE_STATUS_LABELS[s]}</option>)}
-        </select>
+        </FormSelect>
       </FormField>
       <FormField id="vh-notes" label="Notes (optional)" error={errors.notes?.message}>
         <input {...register('notes')} {...fieldA11y('vh-notes', errors.notes?.message)} autoComplete="off" className={inputClass} />

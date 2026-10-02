@@ -8,6 +8,7 @@ import { useProductChoices, useSaveVariant } from './hooks'
 import { ACTIVE_STATUS_LABELS } from './labels'
 import { defaultVariantValues, toVariantInput, variantFormSchema, type VariantFormValues } from './sheetForms'
 import { sheetSubmitError } from './submitError'
+import { FormSelect } from '../../components/forms/Select'
 
 const initial = (v?: SheetVariant): VariantFormValues => v
   ? { productId: v.productId, lengthFt: String(v.lengthFt), totalQuantity: String(v.totalQuantity), status: v.status, notes: v.notes ?? '' }
@@ -16,7 +17,7 @@ const initial = (v?: SheetVariant): VariantFormValues => v
 function Form({ variant, onClose, onSaved }: { variant?: SheetVariant; onClose: () => void; onSaved: () => void }) {
   const save = useSaveVariant(variant?.id)
   const products = useProductChoices()
-  const { register, handleSubmit, formState: { errors } } = useForm<VariantFormValues>({ resolver: zodResolver(variantFormSchema), defaultValues: initial(variant) })
+  const { register, handleSubmit, control, formState: { errors } } = useForm<VariantFormValues>({ resolver: zodResolver(variantFormSchema), defaultValues: initial(variant) })
   const onSubmit = handleSubmit(async (values) => {
     if (save.isPending) return
     try { await save.mutateAsync(toVariantInput(values)); onSaved() } catch { /* shown via save.isError */ }
@@ -26,10 +27,10 @@ function Form({ variant, onClose, onSaved }: { variant?: SheetVariant; onClose: 
   return (
     <form onSubmit={onSubmit} noValidate className="grid grid-cols-1 gap-4 md:grid-cols-2">
       <FormField id="vr-product" label="Product" error={errors.productId?.message}>
-        <select {...register('productId')} {...fieldA11y('vr-product', errors.productId?.message)} data-autofocus className={inputClass} disabled={products.isLoading}>
+        <FormSelect control={control} name="productId" {...fieldA11y('vr-product', errors.productId?.message)} data-autofocus className={inputClass} disabled={products.isLoading}>
           <option value="">Choose a product</option>
           {choices.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
-        </select>
+        </FormSelect>
       </FormField>
       <FormField id="vr-length" label="Length (feet)" error={errors.lengthFt?.message} hint="For example 8 or 10.5. Each size is its own variant.">
         <input {...register('lengthFt')} {...fieldA11y('vr-length', errors.lengthFt?.message, true)} inputMode="decimal" autoComplete="off" className={inputClass} />
@@ -38,9 +39,9 @@ function Form({ variant, onClose, onSaved }: { variant?: SheetVariant; onClose: 
         <input {...register('totalQuantity')} {...fieldA11y('vr-total', errors.totalQuantity?.message, true)} inputMode="numeric" autoComplete="off" className={inputClass} />
       </FormField>
       <FormField id="vr-status" label="Status" error={errors.status?.message}>
-        <select {...register('status')} {...fieldA11y('vr-status', errors.status?.message)} className={inputClass}>
+        <FormSelect control={control} name="status" {...fieldA11y('vr-status', errors.status?.message)} className={inputClass}>
           {(['active', 'inactive'] as const).map((s) => <option key={s} value={s}>{ACTIVE_STATUS_LABELS[s]}</option>)}
-        </select>
+        </FormSelect>
       </FormField>
       {variant && (
         <div className="rounded-md bg-canvas px-3 py-2 text-xs text-muted md:col-span-2">

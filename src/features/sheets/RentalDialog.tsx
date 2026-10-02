@@ -16,6 +16,8 @@ import {
   defaultRentalValues, NEW_CUSTOMER, rentalFormSchema, toNewCustomerInput, toRentalInput, type RentalFormValues,
 } from './sheetForms'
 import { sheetSubmitError } from './submitError'
+import { FormSelect } from '../../components/forms/Select'
+import { FormDatePicker } from '../../components/forms/DatePicker'
 
 const money = (paise: number) => (paise / 100).toFixed(2)
 
@@ -37,7 +39,7 @@ function Form({ rental, onClose, onSaved }: { rental?: SheetRental; onClose: () 
   const createdCustomerId = useRef<string | null>(null) // reused if the rental save fails after the customer was created
   const [confirmCancel, setConfirmCancel] = useState(false)
 
-  const { register, handleSubmit, watch, setError, formState: { errors } } = useForm<RentalFormValues>({
+  const { register, handleSubmit, control, watch, setError, formState: { errors } } = useForm<RentalFormValues>({
     resolver: zodResolver(rentalFormSchema), defaultValues: initial(rental),
   })
   const [customerId, variantId, rentText, discountText] = watch(['customerId', 'variantId', 'rent', 'discount'])
@@ -75,11 +77,11 @@ function Form({ rental, onClose, onSaved }: { rental?: SheetRental; onClose: () 
   return (
     <form onSubmit={onSubmit} noValidate className="grid grid-cols-1 gap-4 md:grid-cols-2">
       <FormField id="rt-customer" label="Customer" error={errors.customerId?.message} className="md:col-span-2">
-        <select {...register('customerId')} {...fieldA11y('rt-customer', errors.customerId?.message)} data-autofocus className={inputClass} disabled={customers.isLoading}>
+        <FormSelect control={control} name="customerId" {...fieldA11y('rt-customer', errors.customerId?.message)} data-autofocus className={inputClass} disabled={customers.isLoading}>
           <option value="">Choose a customer</option>
           <option value={NEW_CUSTOMER}>＋ New customer…</option>
           {(customers.data ?? []).map((c) => <option key={c.id} value={c.id}>{c.name}{c.mobile ? ` · ${c.mobile}` : ''}</option>)}
-        </select>
+        </FormSelect>
       </FormField>
       {customerId === NEW_CUSTOMER && (
         <>
@@ -98,10 +100,10 @@ function Form({ rental, onClose, onSaved }: { rental?: SheetRental; onClose: () 
 
       <FormField id="rt-variant" label="Product and size" error={errors.variantId?.message}
         hint={variant ? `${variant.availableQuantity} available of ${variant.totalQuantity} owned.` : rental ? 'The size cannot change on an existing rental.' : undefined}>
-        <select {...register('variantId')} {...fieldA11y('rt-variant', errors.variantId?.message, true)} className={inputClass} disabled={variants.isLoading || Boolean(rental)}>
+        <FormSelect control={control} name="variantId" {...fieldA11y('rt-variant', errors.variantId?.message, true)} className={inputClass} disabled={variants.isLoading || Boolean(rental)}>
           <option value="">Choose a size</option>
           {activeVariants.map((v) => <option key={v.id} value={v.id}>{v.productName} · {variantLabel(v.lengthFt)} ({v.availableQuantity} available)</option>)}
-        </select>
+        </FormSelect>
       </FormField>
       <FormField id="rt-quantity" label="Quantity" error={errors.quantity?.message}>
         <input {...register('quantity')} {...fieldA11y('rt-quantity', errors.quantity?.message)} inputMode="numeric" autoComplete="off" className={inputClass} />
@@ -110,10 +112,10 @@ function Form({ rental, onClose, onSaved }: { rental?: SheetRental; onClose: () 
       {!variants.isLoading && !variants.isError && activeVariants.length === 0 && <p className="rounded-md bg-gold-soft px-3 py-2 text-sm text-primary md:col-span-2">Add a product and a size in the Products and Stock tabs first.</p>}
 
       <FormField id="rt-date" label="Rental date" error={errors.rentalDate?.message}>
-        <input type="date" {...register('rentalDate')} {...fieldA11y('rt-date', errors.rentalDate?.message)} className={inputClass} />
+        <FormDatePicker control={control} name="rentalDate" {...fieldA11y('rt-date', errors.rentalDate?.message)} className={inputClass} />
       </FormField>
       <FormField id="rt-expected" label="Expected return date (optional)" error={errors.expectedReturnDate?.message} hint="Used to flag overdue returns.">
-        <input type="date" {...register('expectedReturnDate')} {...fieldA11y('rt-expected', errors.expectedReturnDate?.message, true)} className={inputClass} />
+        <FormDatePicker control={control} name="expectedReturnDate" {...fieldA11y('rt-expected', errors.expectedReturnDate?.message, true)} className={inputClass} />
       </FormField>
 
       <FormField id="rt-rent" label="Rent (₹)" error={errors.rent?.message} hint="The amount you charge for this rental. You can change it when the sheets come back.">
@@ -130,10 +132,10 @@ function Form({ rental, onClose, onSaved }: { rental?: SheetRental; onClose: () 
             <input {...register('advance')} {...fieldA11y('rt-advance', errors.advance?.message, true)} inputMode="decimal" autoComplete="off" placeholder="0.00" className={inputClass} />
           </FormField>
           <FormField id="rt-method" label="Payment method (optional)" error={errors.paymentMethod?.message}>
-            <select {...register('paymentMethod')} {...fieldA11y('rt-method', errors.paymentMethod?.message)} className={inputClass}>
+            <FormSelect control={control} name="paymentMethod" {...fieldA11y('rt-method', errors.paymentMethod?.message)} className={inputClass}>
               <option value="">Not specified</option>
               {PAYMENT_METHODS.map((m) => <option key={m.value} value={m.value}>{m.label}</option>)}
-            </select>
+            </FormSelect>
           </FormField>
         </>
       )}

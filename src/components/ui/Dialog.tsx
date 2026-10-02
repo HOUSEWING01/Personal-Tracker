@@ -1,5 +1,6 @@
 import { useEffect, useId, useRef, type ReactNode } from 'react'
 import { X } from '@phosphor-icons/react'
+import { popoverJustClosed } from '../forms/Popover'
 
 const FOCUSABLE = 'a[href],button:not([disabled]),input:not([disabled]),select:not([disabled]),textarea:not([disabled]),[tabindex]:not([tabindex="-1"])'
 
@@ -39,15 +40,15 @@ export function Dialog({ open, onClose, title, children }: { open: boolean; onCl
   if (!open) return null
   return (
     <div className="fixed inset-0 z-50">
-      <div className="absolute inset-0 bg-ink/40" onClick={onClose} />
+      <div className="absolute inset-0 bg-ink/40" onClick={() => { if (!popoverJustClosed()) onClose() }} />
       <div
         ref={panel}
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}
-        className="absolute inset-x-0 bottom-0 max-h-[92dvh] overflow-y-auto rounded-t-xl bg-surface p-5 shadow-lg md:inset-auto md:left-1/2 md:top-1/2 md:w-full md:max-w-lg md:-translate-x-1/2 md:-translate-y-1/2 md:rounded-lg"
+        className="absolute inset-x-0 bottom-0 max-h-[92dvh] overflow-y-auto overscroll-contain rounded-t-xl bg-surface p-5 shadow-lg md:inset-auto md:left-1/2 md:top-1/2 md:w-full md:max-w-lg md:-translate-x-1/2 md:-translate-y-1/2 md:rounded-lg"
       >
-        <div className="mb-4 flex items-center justify-between">
+        <div className="sticky top-0 z-10 -mx-5 -mt-5 mb-2 flex items-center justify-between bg-surface px-5 pb-2 pt-5">
           <h2 id={titleId} className="text-base font-semibold">{title}</h2>
           <button type="button" aria-label="Close" onClick={onClose} className="-m-1 rounded-md p-2.5 hover:bg-canvas"><X size={20} aria-hidden /></button>
         </div>

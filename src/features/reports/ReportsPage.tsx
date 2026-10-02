@@ -14,6 +14,8 @@ import { summarizeFromTotals, type FinanceSummary } from '../finance/financeEngi
 import { useTripOptions } from '../transport/hooks'
 import type { ReportFilters } from '../../services/reportService'
 import { usePropertyChoices, useReportBreakdown, useReportOutstanding } from './hooks'
+import { Select } from '../../components/forms/Select'
+import { DatePicker } from '../../components/forms/DatePicker'
 import {
   METRIC_LABELS, REPORT_KINDS, REPORT_RANGES, metricsFor, monthLabel, outstandingPaise, reportCsv, resolveRange, summariesByBucket,
   type MetricKey, type ReportKind, type ReportRange,
@@ -147,48 +149,48 @@ export function ReportsPage() {
 
       <form className="grid grid-cols-2 gap-3 md:grid-cols-4" onSubmit={(e) => e.preventDefault()} aria-label="Report filters">
         <label className="text-sm font-medium">Period
-          <select value={range} onChange={(e) => update({ range: e.target.value })} className={field}>
+          <Select value={range} onChange={(v) => update({ range: v })} className={field}>
             {REPORT_RANGES.map((r) => <option key={r} value={r}>{RANGE_LABELS[r]}</option>)}
-          </select>
+          </Select>
         </label>
         {range === 'custom' && (
           <>
             <label className="text-sm font-medium">From
-              <input type="date" value={p.from} onChange={(e) => update({ from: e.target.value })} className={field} />
+              <DatePicker value={p.from} onChange={(v) => update({ from: v })} className={field} />
             </label>
             <label className="text-sm font-medium">To
-              <input type="date" value={p.to} onChange={(e) => update({ to: e.target.value })} className={field} />
+              <DatePicker value={p.to} onChange={(v) => update({ to: v })} className={field} />
             </label>
           </>
         )}
         <label className="text-sm font-medium">Show
-          <select value={kind} onChange={(e) => update({ kind: e.target.value })} className={field}>
+          <Select value={kind} onChange={(v) => update({ kind: v })} className={field}>
             {REPORT_KINDS.map((k) => <option key={k} value={k}>{KIND_LABELS[k]}</option>)}
-          </select>
+          </Select>
         </label>
         <label className="text-sm font-medium">Module
-          <select value={module ?? 'all'} onChange={(e) => update({ module: e.target.value })} className={field}>
+          <Select value={module ?? 'all'} onChange={(v) => update({ module: v })} className={field}>
             <option value="all">All modules</option>
             {BUSINESS_MODULES.map((m) => <option key={m} value={m}>{MODULE_LABELS[m]}</option>)}
-          </select>
+          </Select>
         </label>
         <label className="text-sm font-medium">Vehicle
-          <select value={vehicleId ?? 'all'} onChange={(e) => update({ vehicle: e.target.value })} className={field}>
+          <Select value={vehicleId ?? 'all'} onChange={(v) => update({ vehicle: v })} className={field}>
             <option value="all">All vehicles</option>
             {(options.data?.vehicles ?? []).map((v) => <option key={v.id} value={v.id}>{v.name} ({v.registrationNumber})</option>)}
-          </select>
+          </Select>
         </label>
         <label className="text-sm font-medium">Property
-          <select value={propertyId ?? 'all'} onChange={(e) => update({ property: e.target.value })} className={field}>
+          <Select value={propertyId ?? 'all'} onChange={(v) => update({ property: v })} className={field}>
             <option value="all">All properties</option>
             {(properties.data ?? []).map((x) => <option key={x.id} value={x.id}>{x.name}</option>)}
-          </select>
+          </Select>
         </label>
         <label className="text-sm font-medium">Customer
-          <select value={customerId ?? 'all'} onChange={(e) => update({ customer: e.target.value })} className={field}>
+          <Select value={customerId ?? 'all'} onChange={(v) => update({ customer: v })} className={field}>
             <option value="all">All customers</option>
             {(options.data?.customers ?? []).map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
-          </select>
+          </Select>
         </label>
       </form>
       {(options.isError || properties.isError) && (

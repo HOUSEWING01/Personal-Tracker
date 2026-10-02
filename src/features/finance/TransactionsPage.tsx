@@ -12,6 +12,8 @@ import { MODULE_LABELS, TYPE_LABELS } from './labels'
 import { AddTransactionDialog } from './AddTransactionDialog'
 import { SummaryStrip } from './SummaryStrip'
 import { TransactionList } from './TransactionList'
+import { Select } from '../../components/forms/Select'
+import { DatePicker } from '../../components/forms/DatePicker'
 
 const DEFAULTS = { type: 'all', module: 'all', from: '', to: '', q: '', sort: 'newest', page: '1' }
 const field = 'mt-1 w-full rounded-md border border-line bg-surface px-3 py-2 text-sm'
@@ -79,22 +81,22 @@ export function TransactionsPage() {
           <input type="search" value={qText} onChange={(e) => setQText(e.target.value)} className={field} />
         </label>
         <label className="text-sm font-medium">Type
-          <select value={type ?? 'all'} onChange={(e) => update({ type: e.target.value })} className={field}>
+          <Select value={type ?? 'all'} onChange={(v) => update({ type: v })} className={field}>
             <option value="all">All types</option>
             {TRANSACTION_TYPES.map((t) => <option key={t} value={t}>{TYPE_LABELS[t]}</option>)}
-          </select>
+          </Select>
         </label>
         <label className="text-sm font-medium">Module
-          <select value={module ?? 'all'} onChange={(e) => update({ module: e.target.value })} className={field}>
+          <Select value={module ?? 'all'} onChange={(v) => update({ module: v })} className={field}>
             <option value="all">All modules</option>
             {BUSINESS_MODULES.map((m) => <option key={m} value={m}>{MODULE_LABELS[m]}</option>)}
-          </select>
+          </Select>
         </label>
         <label className="text-sm font-medium">From
-          <input type="date" value={from ?? ''} onChange={(e) => update({ from: e.target.value })} className={field} />
+          <DatePicker value={from ?? ''} onChange={(v) => update({ from: v })} className={field} />
         </label>
         <label className="text-sm font-medium">To
-          <input type="date" value={to ?? ''} onChange={(e) => update({ to: e.target.value })} className={field} />
+          <DatePicker value={to ?? ''} onChange={(v) => update({ to: v })} className={field} />
         </label>
       </form>
 
@@ -102,10 +104,10 @@ export function TransactionsPage() {
         <button type="button" className={buttonSecondary} onClick={() => update({ from: month.from, to: month.to })}>This month</button>
         <button type="button" className={buttonSecondary} onClick={() => update({ from: '', to: '' })}>All time</button>
         <label className="ml-auto flex items-center gap-2 text-sm">Sort
-          <select value={sort} onChange={(e) => update({ sort: e.target.value })} className="rounded-md border border-line bg-surface px-2 py-1.5 text-sm">
+          <Select value={sort} onChange={(v) => update({ sort: v })} className="rounded-md border border-line bg-surface px-2 py-1.5 text-sm">
             <option value="newest">Newest first</option>
             <option value="oldest">Oldest first</option>
-          </select>
+          </Select>
         </label>
       </div>
 

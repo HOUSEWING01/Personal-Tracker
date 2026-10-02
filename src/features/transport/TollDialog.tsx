@@ -8,6 +8,8 @@ import type { Toll } from '../../types/transport'
 import { useSaveToll, useTripChoices } from './hooks'
 import { transportSubmitError } from './submitError'
 import { defaultTollValues, toTollInput, tollFormSchema, type TollFormValues } from './transportForms'
+import { FormSelect } from '../../components/forms/Select'
+import { FormDatePicker } from '../../components/forms/DatePicker'
 
 function initial(t?: Toll): TollFormValues {
   if (!t) return defaultTollValues(todayIST())
@@ -17,7 +19,7 @@ function initial(t?: Toll): TollFormValues {
 function Form({ toll, onClose, onSaved }: { toll?: Toll; onClose: () => void; onSaved: () => void }) {
   const save = useSaveToll(toll?.id)
   const trips = useTripChoices()
-  const { register, handleSubmit, formState: { errors } } = useForm<TollFormValues>({
+  const { register, handleSubmit, control, formState: { errors } } = useForm<TollFormValues>({
     resolver: zodResolver(tollFormSchema), defaultValues: initial(toll),
   })
 
@@ -48,13 +50,13 @@ function Form({ toll, onClose, onSaved }: { toll?: Toll; onClose: () => void; on
   return (
     <form onSubmit={onSubmit} noValidate className="grid grid-cols-1 gap-4 md:grid-cols-2">
       <FormField id="tl-trip" label="Trip" error={errors.tripId?.message} className="md:col-span-2" hint="The toll is charged to this trip's vehicle.">
-        <select {...register('tripId')} {...fieldA11y('tl-trip', errors.tripId?.message, true)} data-autofocus className={inputClass}>
+        <FormSelect control={control} name="tripId" {...fieldA11y('tl-trip', errors.tripId?.message, true)} data-autofocus className={inputClass}>
           <option value="">Choose a trip</option>
           {(trips.data ?? []).map((t) => <option key={t.id} value={t.id}>{t.label}</option>)}
-        </select>
+        </FormSelect>
       </FormField>
       <FormField id="tl-date" label="Date" error={errors.tollDate?.message}>
-        <input type="date" {...register('tollDate')} {...fieldA11y('tl-date', errors.tollDate?.message)} className={inputClass} />
+        <FormDatePicker control={control} name="tollDate" {...fieldA11y('tl-date', errors.tollDate?.message)} className={inputClass} />
       </FormField>
       <FormField id="tl-amount" label="Amount (₹)" error={errors.amount?.message}>
         <input {...register('amount')} {...fieldA11y('tl-amount', errors.amount?.message)} inputMode="decimal" autoComplete="off" placeholder="0.00" className={inputClass} />

@@ -11,12 +11,13 @@ import { useLoanPayments, useSaveLoanPayment } from './hooks'
 import { LOAN_STATUS_LABELS } from './labels'
 import { transportSubmitError } from './submitError'
 import { defaultLoanPaymentValues, loanPaymentFormSchema, toLoanPaymentInput, type LoanPaymentFormValues } from './transportForms'
+import { FormDatePicker } from '../../components/forms/DatePicker'
 
 function PaymentForm({ loan, editing, onSaved, onCancelEdit }: {
   loan: VehicleLoan; editing: LoanPayment | null; onSaved: () => void; onCancelEdit: () => void
 }) {
   const save = useSaveLoanPayment(loan.id, editing?.id)
-  const { register, handleSubmit, formState: { errors } } = useForm<LoanPaymentFormValues>({
+  const { register, handleSubmit, control, formState: { errors } } = useForm<LoanPaymentFormValues>({
     resolver: zodResolver(loanPaymentFormSchema),
     defaultValues: editing
       ? { paymentDate: editing.paymentDate, amount: (editing.amountPaise / 100).toFixed(2), notes: editing.notes ?? '' }
@@ -31,7 +32,7 @@ function PaymentForm({ loan, editing, onSaved, onCancelEdit }: {
   return (
     <form onSubmit={onSubmit} noValidate className="grid grid-cols-1 gap-4 md:grid-cols-2" aria-label={editing ? 'Edit payment' : 'Record payment'}>
       <FormField id="lp-date" label="Payment date" error={errors.paymentDate?.message}>
-        <input type="date" {...register('paymentDate')} {...fieldA11y('lp-date', errors.paymentDate?.message)} data-autofocus className={inputClass} />
+        <FormDatePicker control={control} name="paymentDate" {...fieldA11y('lp-date', errors.paymentDate?.message)} data-autofocus className={inputClass} />
       </FormField>
       <FormField id="lp-amount" label="Amount paid (₹)" error={errors.amount?.message} hint="The full amount paid, interest included.">
         <input {...register('amount')} {...fieldA11y('lp-amount', errors.amount?.message, true)} inputMode="decimal" autoComplete="off" placeholder="0.00" className={inputClass} />

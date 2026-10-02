@@ -32,7 +32,7 @@ export function TransportPage() {
   return (
     <>
       <PageHeader title="Transport" description="Trips, fuel, tolls, vehicle loans, vehicles, drivers and customers. and profit." />
-      <div role="tablist" aria-label="Transport sections" onKeyDown={tabsKeyDown(TABS.map((t) => t.id), tab, 'tr-tab-', selectTab)} className="mb-5 flex gap-1 overflow-x-auto border-b border-line">
+      <div role="tablist" aria-label="Transport sections" onKeyDown={tabsKeyDown(TABS.map((t) => t.id), tab, 'tr-tab-', selectTab)} className="mb-5 flex gap-1 overflow-x-auto overflow-y-hidden border-b border-line pb-px">
         {TABS.map((t) => {
           const selected = t.id === tab
           return (

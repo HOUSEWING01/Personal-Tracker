@@ -5,6 +5,7 @@ import { buttonSecondary } from '../../components/ui/FullScreenMessage'
 import { useVehicleProfit } from './hooks'
 import { sumProfitTotals, vehicleAfterFinancingPaise, vehicleOperatingProfitPaise } from './transportEngine'
 import { TRANSPORT_URL_DEFAULTS } from './useListControls'
+import { DatePicker } from '../../components/forms/DatePicker'
 
 const field = 'mt-1 w-full rounded-md border border-line bg-surface px-3 py-2 text-sm'
 
@@ -34,8 +35,8 @@ export function ProfitTab() {
   return (
     <>
       <form className="mb-4 flex flex-wrap items-end gap-3" onSubmit={(e) => e.preventDefault()} aria-label="Period">
-        <label className="text-sm font-medium">From<input type="date" value={from} onChange={(e) => update({ from: e.target.value })} className={field} /></label>
-        <label className="text-sm font-medium">To<input type="date" value={to} onChange={(e) => update({ to: e.target.value })} className={field} /></label>
+        <label className="text-sm font-medium">From<DatePicker value={from} onChange={(v) => update({ from: v })} className={field} /></label>
+        <label className="text-sm font-medium">To<DatePicker value={to} onChange={(v) => update({ to: v })} className={field} /></label>
         <button type="button" className={buttonSecondary} onClick={() => { const m = currentMonthRangeIST(); update({ from: m.from, to: m.to }) }}>This month</button>
         <button type="button" className={buttonSecondary} onClick={() => update({ from: '', to: '' })}>All time</button>
       </form>

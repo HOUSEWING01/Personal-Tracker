@@ -8,13 +8,14 @@ import { useSaveDriver } from './hooks'
 import { DRIVER_STATUS_LABELS } from './labels'
 import { transportSubmitError } from './submitError'
 import { defaultDriverValues, driverFormSchema, toDriverInput, type DriverFormValues } from './transportForms'
+import { FormSelect } from '../../components/forms/Select'
 
 const initial = (d?: Driver): DriverFormValues =>
   d ? { name: d.name, mobile: d.mobile ?? '', address: d.address ?? '', status: d.status, notes: d.notes ?? '' } : defaultDriverValues()
 
 function Form({ driver, onClose, onSaved }: { driver?: Driver; onClose: () => void; onSaved: () => void }) {
   const save = useSaveDriver(driver?.id)
-  const { register, handleSubmit, formState: { errors } } = useForm<DriverFormValues>({
+  const { register, handleSubmit, control, formState: { errors } } = useForm<DriverFormValues>({
     resolver: zodResolver(driverFormSchema), defaultValues: initial(driver),
   })
   const onSubmit = handleSubmit(async (values) => {
@@ -33,9 +34,9 @@ function Form({ driver, onClose, onSaved }: { driver?: Driver; onClose: () => vo
         <input {...register('address')} {...fieldA11y('dr-address', errors.address?.message)} autoComplete="off" className={inputClass} />
       </FormField>
       <FormField id="dr-status" label="Status" error={errors.status?.message} hint="Inactive drivers can be hidden from trip pickers later.">
-        <select {...register('status')} {...fieldA11y('dr-status', errors.status?.message, true)} className={inputClass}>
+        <FormSelect control={control} name="status" {...fieldA11y('dr-status', errors.status?.message, true)} className={inputClass}>
           {(['active', 'inactive'] as const).map((s) => <option key={s} value={s}>{DRIVER_STATUS_LABELS[s]}</option>)}
-        </select>
+        </FormSelect>
       </FormField>
       <FormField id="dr-notes" label="Notes (optional)" error={errors.notes?.message} className="md:col-span-2">
         <input {...register('notes')} {...fieldA11y('dr-notes', errors.notes?.message)} autoComplete="off" className={inputClass} />

@@ -22,7 +22,7 @@ export function SheetsPage() {
   return (
     <>
       <PageHeader title="Sheet rental" description="Rentals with partial returns and payments, stock by size, and the products you rent out." />
-      <div role="tablist" aria-label="Sheet rental sections" onKeyDown={tabsKeyDown(TABS.map((t) => t.id), tab, 'sh-tab-', selectTab)} className="mb-5 flex gap-1 overflow-x-auto border-b border-line">
+      <div role="tablist" aria-label="Sheet rental sections" onKeyDown={tabsKeyDown(TABS.map((t) => t.id), tab, 'sh-tab-', selectTab)} className="mb-5 flex gap-1 overflow-x-auto overflow-y-hidden border-b border-line pb-px">
         {TABS.map((t) => {
           const selected = t.id === tab
           return (
