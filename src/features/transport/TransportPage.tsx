@@ -31,7 +31,7 @@ export function TransportPage() {
 
   return (
     <>
-      <PageHeader title="Transport" description="Trips, fuel, tolls, vehicle loans, profit, vehicles, drivers and customers." />
+      <PageHeader title="Transport" />
       <TabBar tabs={TABS} current={tab} onSelect={selectTab} label="Transport sections" idPrefix="tr-tab-" panelId="tr-panel" />
       <div role="tabpanel" id="tr-panel" tabIndex={0} aria-labelledby={`tr-tab-${tab}`}>
         {tab === 'trips' && <TripsTab />}

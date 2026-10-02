@@ -59,10 +59,13 @@ export function MasterList<T>(p: Props<T>) {
   const statusActive = p.status && p.status.value !== 'all' ? 1 : 0
   const activeCount = statusActive + (p.filterCount ?? 0) + (p.qText ? 1 : 0)
   const hasFilters = Boolean(p.status || p.filters)
+  // Nothing saved yet and nothing searched: the empty state already offers the one "Add" action, so hide the search
+  // box, filters and the extra add buttons (they would only repeat it and leave nothing to search).
+  const firstUse = !p.isLoading && !p.isError && total === 0 && !p.filtered
 
   return (
     <>
-      <div className="flex items-start gap-3">
+      {!firstUse && <div className="flex items-start gap-3">
         <div className="min-w-0 flex-1">
           <ListToolbar searchLabel={p.searchLabel} searchValue={p.qText} onSearch={p.onSearch} activeCount={activeCount} onClear={p.onClear}>
             {hasFilters ? (
@@ -81,9 +84,9 @@ export function MasterList<T>(p: Props<T>) {
           </ListToolbar>
         </div>
         <AddButton label={`Add ${p.noun}`} onClick={p.onAdd} />
-      </div>
+      </div>}
 
-      <div className="mt-4">
+      <div className={firstUse ? '' : 'mt-4'}>
         {p.isError ? (
           <div role="alert" className="rounded-lg border border-line bg-surface px-6 py-8 text-center">
             <p className="text-sm font-medium">Could not load {p.noun}s</p>
