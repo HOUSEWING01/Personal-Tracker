@@ -321,3 +321,13 @@ Typing a date by hand into the field is no longer possible (pick from the calend
 ### Not changed
 Two `title` tooltips on truncated text remain native.
 
+## D-032 Property rental is now "Godowns": one name, one page (Session 14)
+### Context
+The admin only rents out godowns. "Property" was just the tenant's name, and the tenant, rent and advance were spread over three tabs and three dialogs.
+### Decision
+The Property module is presented as **Godowns**. The tenant's name is the godown's name (one field). Adding a godown is one form: tenant name, rent, start date, optional advance, mobile, location. A godown has one page with the figures, the rent months and the advance history; there are no tabs. "Tenant leaving" sets the end date and returns the advance (all, part or none) in one step; "New tenant" replaces the tenant (D-012) and can record a new advance. Advance "adjusted against rent" is no longer offered from the leaving flow, but "Add advance" still lists all three kinds.
+### Not changed
+No migration. Tables, views, RPCs, the ledger postings (D-029) and the `/property` URLs are unchanged. Multi-step saves run in order, and a retry skips steps already done (no duplicate godown or advance).
+### Trade-offs
+Renaming the tenant renames the godown. Two tenants cannot share one godown record.
+

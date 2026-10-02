@@ -5,7 +5,7 @@ export const TYPE_LABELS: Record<TransactionType, string> = {
   deposit_received: 'Deposit received', deposit_returned: 'Deposit returned',
 }
 export const MODULE_LABELS: Record<BusinessModule, string> = {
-  property: 'Property rental', transport: 'Transport', sheets: 'Sheet rental', gold_loans: 'Gold loans', general: 'General',
+  property: 'Godown rent', transport: 'Transport', sheets: 'Sheet rental', gold_loans: 'Gold loans', general: 'General',
 }
 
 export const PAYMENT_METHODS = [

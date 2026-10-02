@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import {
+  godownFormSchema, makeLeavingSchema, toGodownInput, toLeavingInput,
   defaultRentPaymentValues, makeAdvanceSchema, makeRentPaymentSchema, propertyFormSchema, tenantFormSchema, toPropertyInput, toRentPaymentInput,
 } from './propertyForms'
 
@@ -61,5 +62,35 @@ describe('advance schema', () => {
   })
   it('does not cap newly received advance', () => {
     expect(schema.safeParse({ ...ok, kind: 'received', amount: '99999' }).success).toBe(true)
+  })
+})
+
+describe('godownFormSchema', () => {
+  const ok = { name: ' Ravi Traders ', mobile: '', monthlyRent: '15,000', rentalStartDate: '2026-10-01', address: '', advance: '' }
+  it('accepts a godown with no advance and converts to integer paise', () => {
+    expect(godownFormSchema.safeParse(ok).success).toBe(true)
+    expect(toGodownInput(godownFormSchema.parse(ok))).toMatchObject({ name: 'Ravi Traders', monthlyRentPaise: 1_500_000, advancePaise: 0, mobile: null, address: null })
+  })
+  it('reads the advance in paise', () => {
+    expect(toGodownInput(godownFormSchema.parse({ ...ok, advance: '50000.50' })).advancePaise).toBe(5_000_050)
+  })
+  it('rejects a missing name, zero rent, a bad mobile and a negative advance', () => {
+    expect(msgs(godownFormSchema.safeParse({ ...ok, name: ' ' }))).toContain('Enter the tenant name.')
+    expect(msgs(godownFormSchema.safeParse({ ...ok, monthlyRent: '0' }))).toContain('Amount must be greater than zero.')
+    expect(msgs(godownFormSchema.safeParse({ ...ok, mobile: '12345' }))).toContain('Enter a 10-digit mobile number.')
+    expect(msgs(godownFormSchema.safeParse({ ...ok, advance: '-5' }))).toContain('Enter a valid amount with up to 2 decimals.')
+  })
+})
+
+describe('makeLeavingSchema', () => {
+  const schema = makeLeavingSchema(5_000_000, '2026-01-01')
+  it('allows returning all, part or none of the advance', () => {
+    expect(schema.safeParse({ leaveDate: '2026-10-03', returnAmount: '50000' }).success).toBe(true)
+    expect(schema.safeParse({ leaveDate: '2026-10-03', returnAmount: '20000' }).success).toBe(true)
+    expect(toLeavingInput(schema.parse({ leaveDate: '2026-10-03', returnAmount: '' }))).toEqual({ leaveDate: '2026-10-03', returnPaise: 0 })
+  })
+  it('rejects returning more than is held, and leaving before the start date', () => {
+    expect(msgs(schema.safeParse({ leaveDate: '2026-10-03', returnAmount: '50000.01' }))).toContain('Amount is more than the advance held.')
+    expect(msgs(schema.safeParse({ leaveDate: '2025-12-31', returnAmount: '' }))).toContain('Leaving date cannot be before the rental start date.')
   })
 })

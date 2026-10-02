@@ -1,5 +1,10 @@
 # Changelog
 
+## Session 14 - Godowns (D-032)
+- Property rental screens simplified for godowns only: list "Godowns", one add form (tenant, rent, start date, advance), one page per godown (no tabs), "Tenant leaving" returns the advance, "New tenant" re-lets. New `GodownDialog`, `LeavingDialog`, `useSaveGodown`, `useLeaveTenancy`; removed `PropertyDialog`, `TenantDialog`, `TenantTab`. No database change.
+- Tests: 9 new (form schemas 5, dialog 4 including retry after a partial failure).
+- Transport lists: no search / add buttons on an empty first-use list, Transport page description removed.
+
 ## Session 13 - Themed dropdowns and date picker (D-031)
 - New `components/forms/Select.tsx`, `DatePicker.tsx`, `Popover.tsx` and `lib/calendar.ts`. All 38 native `<select>` and 25 `type="date"` inputs replaced (27 files). Open list and calendar now follow the palette, open in a portal above dialogs, flip upward near the screen bottom, and are keyboard accessible.
 - Dialog backdrop ignores the click that just closed a dropdown or calendar, so one stray click no longer discards a form.

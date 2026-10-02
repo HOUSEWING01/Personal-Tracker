@@ -11,7 +11,7 @@ export const NAV: NavGroup[] = [
   {
     label: 'Business',
     items: [
-      { to: '/property', label: 'Property rental', icon: Buildings, phase: 4 },
+      { to: '/property', label: 'Godowns', icon: Buildings, phase: 4 },
       { to: '/transport', label: 'Transport', icon: Truck, phase: 5 },
       { to: '/sheets', label: 'Sheet rental', icon: Stack, phase: 6 },
       { to: '/gold-loans', label: 'Gold loans', icon: Coins, phase: 7 },

@@ -31,8 +31,8 @@ export function RentTab({ propertyId, hasTenant, onNotice }: { propertyId: strin
   if (rows.length === 0) {
     return (
       <EmptyState
-        title={hasTenant ? 'No rent due yet' : 'No tenant yet'}
-        description={hasTenant ? 'Rent is created for each month from the rental start date. Check the tenant’s start date and that the property is active.' : 'Add the tenant on the Tenant tab. Monthly rent starts from their rental start date.'}
+        title={hasTenant ? 'No rent due yet' : 'No tenant'}
+        description={hasTenant ? 'Rent is created for each month from the rental start date. Check the rental start date.' : 'Use “New tenant” above to start monthly rent.'}
       />
     )
   }

@@ -96,8 +96,8 @@ export function DashboardPage() {
         <Tile label="Loan repayments" value={money(f?.loanRepayments)} hint="Includes interest" />
       </Section>
 
-      <Section title="Property" to="/property" linkLabel="Open property" loading={counts.isLoading} error={counts.isError} onRetry={() => void counts.refetch()}>
-        <Tile label="Active properties" value={num(c?.activeProperties)} />
+      <Section title="Godowns" to="/property" linkLabel="Open godowns" loading={counts.isLoading} error={counts.isError} onRetry={() => void counts.refetch()}>
+        <Tile label="Godowns" value={num(c?.activeProperties)} />
         <Tile label="Occupied" value={num(c?.occupiedProperties)} />
         <Tile label="Rent outstanding" value={money(c?.rentOutstandingPaise)} />
       </Section>

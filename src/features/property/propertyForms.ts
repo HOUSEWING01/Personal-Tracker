@@ -61,6 +61,47 @@ export function toTenantInput(v: TenantFormValues) {
   }
 }
 
+// ---------- godown: the godown, its tenant and the opening advance in one form (the tenant's name is the godown's name) ----------
+export const godownFormSchema = z.object({
+  name: z.string().trim().min(1, 'Enter the tenant name.').max(100, 'Keep the name under 100 characters.'),
+  mobile: z.string().trim().refine((s) => s === '' || /^[0-9]{10}$/.test(s), 'Enter a 10-digit mobile number.'),
+  monthlyRent: positiveMoney('Enter the monthly rent.'),
+  rentalStartDate: date('Enter the rental start date.'),
+  address: optionalText(300, 'Keep the location under 300 characters.'),
+  advance: z.string().trim().refine((s) => s === '' || (parseMoney(s) ?? -1) >= 0, 'Enter a valid amount with up to 2 decimals.'),
+})
+export type GodownFormValues = z.infer<typeof godownFormSchema>
+export const defaultGodownValues = (): GodownFormValues =>
+  ({ name: '', mobile: '', monthlyRent: '', rentalStartDate: todayIST(), address: '', advance: '' })
+export function toGodownInput(v: GodownFormValues) {
+  return {
+    name: v.name.trim(), mobile: v.mobile.trim() || null, monthlyRentPaise: toPaiseStrict(v.monthlyRent),
+    rentalStartDate: v.rentalStartDate, address: v.address.trim() || null,
+    advancePaise: v.advance.trim() === '' ? 0 : toPaiseStrict(v.advance),
+  }
+}
+export type GodownInput = ReturnType<typeof toGodownInput>
+
+// ---------- tenant leaving: end the tenancy and hand back the advance ----------
+export function makeLeavingSchema(remainingPaise: number, startDate: string) {
+  return z.object({
+    leaveDate: date('Enter the leaving date.'),
+    returnAmount: z.string().trim().refine((s) => s === '' || (parseMoney(s) ?? -1) >= 0, 'Enter a valid amount with up to 2 decimals.'),
+  }).superRefine((v, ctx) => {
+    if (isValidISODate(v.leaveDate) && v.leaveDate < startDate)
+      ctx.addIssue({ code: 'custom', path: ['leaveDate'], message: 'Leaving date cannot be before the rental start date.' })
+    const p = v.returnAmount === '' ? 0 : parseMoney(v.returnAmount)
+    if (p !== null && p > remainingPaise)
+      ctx.addIssue({ code: 'custom', path: ['returnAmount'], message: 'Amount is more than the advance held.' })
+  })
+}
+export type LeavingFormValues = z.infer<ReturnType<typeof makeLeavingSchema>>
+export const defaultLeavingValues = (remainingPaise: number): LeavingFormValues =>
+  ({ leaveDate: todayIST(), returnAmount: remainingPaise > 0 ? (remainingPaise / 100).toFixed(2) : '' })
+export function toLeavingInput(v: LeavingFormValues) {
+  return { leaveDate: v.leaveDate, returnPaise: v.returnAmount === '' ? 0 : toPaiseStrict(v.returnAmount) }
+}
+
 // ---------- rent payment (the cap is the month's outstanding; the database enforces it again) ----------
 export function makeRentPaymentSchema(outstandingPaise: number) {
   return z.object({
