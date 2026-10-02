@@ -1,0 +1,31 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+
+  /* Brand palette (source: docs/design-reference/colour-palette-07.png) */
+  --color-primary: #0c3b2e;       /* deep green: buttons, headings, active text */
+  --color-primary-hover: #092e24;
+  --color-sage: #6d9773;          /* sage: secondary fills, icons, borders on dark, progress */
+  --color-copper: #bb8a52;        /* copper: decorative accents, category tags */
+  --color-gold: #ffba00;          /* gold: highlights, badges, warnings (use dark text on it) */
+
+  /* Derived neutrals and tints */
+  --color-canvas: #f3f5f2;
+  --color-surface: #ffffff;
+  --color-line: #dfe5df;
+  --color-ink: #0c3b2e;
+  --color-muted: #4f5f57;
+  --color-sage-soft: #e6efe7;     /* active nav, selected rows */
+  --color-gold-soft: #fff3cc;     /* warning/attention background */
+  --color-copper-soft: #f4e9dc;
+
+  /* Semantic (outside brand palette, kept for clear meaning) */
+  --color-danger: #b42318;
+  --color-danger-soft: #fdeceb;
+}
+
+html, body, #root { height: 100%; }
+body { background: var(--color-canvas); color: var(--color-ink); font-family: var(--font-sans); -webkit-font-smoothing: antialiased; }
+:focus-visible { outline: 2px solid var(--color-primary); outline-offset: 2px; }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }

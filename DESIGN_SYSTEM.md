@@ -1,0 +1,66 @@
+# Design System
+
+Direction: calm, natural, premium business tool. Deep green + sage with sparing gold and copper. Dense, ledger-like layouts; hairline borders; minimal shadow.
+Reference: `docs/design-reference/colour-palette-07.png` (palette "07").
+
+## Brand palette (fixed, see SESSION.md section 22A)
+
+| Token | Hex | Role |
+|---|---|---|
+| `primary` | `#0C3B2E` | Primary buttons, headings, body ink, active nav text, focus ring |
+| `primary-hover` | `#092E24` | Hover/pressed for primary |
+| `sage` | `#6D9773` | Secondary fills, icons, progress, borders on dark surfaces |
+| `copper` | `#BB8A52` | Decorative accents, category tags |
+| `gold` | `#FFBA00` | Highlights, badges, warnings (always with Primary text) |
+
+## Derived tokens
+
+| Token | Hex | Use |
+|---|---|---|
+| `canvas` | `#F3F5F2` | App background |
+| `surface` | `#FFFFFF` | Cards, tables, drawers |
+| `line` | `#DFE5DF` | Borders, dividers |
+| `muted` | `#4F5F57` | Secondary text (6.8:1 on white) |
+| `sage-soft` | `#E6EFE7` | Active nav item, selected row, subtle fills |
+| `gold-soft` | `#FFF3CC` | Attention/warning background |
+| `copper-soft` | `#F4E9DC` | Tag backgrounds |
+| `danger` / `danger-soft` | `#B42318` / `#FDECEB` | Errors, destructive actions (semantic exception) |
+
+## Contrast (measured)
+
+| Pair | Ratio | Verdict |
+|---|---|---|
+| White on Primary | 12.5 | OK, all sizes |
+| Primary on Gold | 7.3 | OK, all sizes |
+| Primary on Sage-soft | 10.6 | OK |
+| Muted on White | 6.8 | OK |
+| White on Sage | 3.3 | Large text / UI shapes only |
+| White on Copper | 3.1 | Large text / UI shapes only |
+
+Rules: no small white text on Sage or Copper; Gold is never text on light backgrounds; one gold highlight per screen is plenty.
+
+## Component colour recipes
+- Primary button: `bg-primary text-white hover:bg-primary-hover`
+- Secondary button: `bg-sage-soft text-primary hover:bg-sage/25` or outlined `border-line`
+- Active nav: `bg-sage-soft text-primary font-medium`
+- Status: Paid/Active = sage-soft + primary text; Due soon/Warning = gold-soft + primary text; Overdue/Error = danger-soft + danger text; Neutral = canvas + muted
+- Focus ring: 2px `primary`, 2px offset
+- Charts: Primary, Sage, Copper, Gold in that order; never rely on colour alone (add labels/patterns)
+
+## Type
+Inter with system fallback. Page title 20px/semibold; body 14px; helper text `muted`. (The reference uses a serif display face for brand moments; optional later, see TODO P2. Not adopted yet.)
+
+## Layout and shape
+Desktop >=1024px: 240px sidebar + content (max 1152px). Mobile: top bar + slide-over menu. Radii 6-8px for controls, 12px max for sheets/drawers. Minimal shadows.
+
+## Components built
+PageHeader, EmptyState, FullScreenMessage (+ `buttonPrimary`/`buttonSecondary` class strings), SignOutButton, AppShell, LoginPage, SummaryStrip, TransactionList (table at md+, cards below), TypeBadge (in = sage-soft, out = canvas, adjustment = gold-soft). Planned: DataTable, FormField, Button, Dialog, StatusBadge, Toast.
+
+## Forms and dialogs
+`FormField` (label above control, hint `text-xs muted`, error `text-xs danger` with `role="alert"`), `inputClass` (6px radius, `aria-[invalid=true]:border-danger`). `Dialog`: centered panel on desktop (max-w-lg), bottom sheet on mobile (rounded top 12px); Esc closes, Tab trapped, focus returns to the opener, background scroll locked. Primary action right-aligned, Cancel left of it, buttons name the action ("Save transaction").
+
+## Rules
+Visible focus ring, reduced motion respected, sentence-case copy, buttons name the action ("Save changes"). Phosphor icons, 18px in nav, `aria-hidden` beside text, `aria-label` on icon-only buttons. Never hardcode hex in components; use tokens.
+
+## Tabs and status badges (Phase 4)
+Tabs: `role=tablist` with `role=tab` buttons, bottom border 2px primary when selected, selected tab stored in the URL (`?tab=`). Rent status badge always carries text (Paid = sage-soft, Part paid = gold-soft, Unpaid = canvas, plus a separate danger-soft "Overdue" label). Occupied / Vacant / Inactive use the same `Pill`. Lists use table at md+ and cards below, like Transactions.
