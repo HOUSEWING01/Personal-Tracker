@@ -49,7 +49,7 @@ export function Dialog({ open, onClose, title, children }: { open: boolean; onCl
       >
         <div className="mb-4 flex items-center justify-between">
           <h2 id={titleId} className="text-base font-semibold">{title}</h2>
-          <button type="button" aria-label="Close" onClick={onClose} className="rounded-md p-1.5 hover:bg-canvas"><X size={20} /></button>
+          <button type="button" aria-label="Close" onClick={onClose} className="-m-1 rounded-md p-2.5 hover:bg-canvas"><X size={20} aria-hidden /></button>
         </div>
         {children}
       </div>

@@ -37,7 +37,7 @@ function Form({ propertyId, remainingPaise, onClose, onSaved }: { propertyId: st
       <FormField id="ad-notes" label="Notes (optional)" error={errors.notes?.message}>
         <input {...register('notes')} {...fieldA11y('ad-notes', errors.notes?.message)} autoComplete="off" className={inputClass} />
       </FormField>
-      <p className="text-xs text-muted md:col-span-2">Advance entries are history only. They are not added to Finance → Transactions.</p>
+      <p className="text-xs text-muted md:col-span-2">Received and returned entries are posted to Finance → Transactions as deposits: they count in cash flow, never in revenue or profit. Adjusted entries move no cash and are not posted.</p>
       {record.isError && <p role="alert" className="rounded-md bg-danger-soft px-3 py-2 text-sm text-danger md:col-span-2">{submitError(record.error, 'advance entry')}</p>}
       <div className="flex justify-end gap-2 md:col-span-2">
         <button type="button" className={buttonSecondary} onClick={onClose}>Cancel</button>

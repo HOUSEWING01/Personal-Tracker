@@ -3,7 +3,7 @@
 1. Create a project at supabase.com.
 2. **Authentication → Sign In / Providers → Email:** keep Email enabled and **disable "Allow new users to sign up"** (single-admin app).
 3. **Authentication → Users → Add user:** create the admin with email + password (tick "Auto confirm user").
-4. **SQL editor:** run `supabase/migrations/0001_foundation.sql`, then `0002_transaction_totals.sql` (the Transactions summary needs it), then `0003_property_rental.sql` (Property rental needs it). Run them in order, once each.
+4. **SQL editor:** run `supabase/migrations/0001_foundation.sql`, then `0002_transaction_totals.sql` (the Transactions summary needs it), then `0003_property_rental.sql` (Property rental needs it), then `0004_transport_masters.sql` and `0005_vehicle_investment.sql` (Transport needs both). Run them in order, once each.
 5. Make that user the admin (replace the email):
    ```sql
    insert into public.admin_users (user_id)

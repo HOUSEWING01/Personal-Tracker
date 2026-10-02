@@ -1,7 +1,7 @@
 import { z } from 'zod'
 import { isValidISODate, todayIST } from '../../lib/dates'
 import { toPaise } from '../../lib/money'
-import { BUSINESS_MODULES, TRANSACTION_TYPES } from '../../types/finance'
+import { BUSINESS_MODULES, MANUAL_TRANSACTION_TYPES } from '../../types/finance'
 import type { NewTransaction } from '../../services/transactionService'
 
 const MAX_PAISE = 99_999_999_999_999 // numeric(14,2)
@@ -15,7 +15,7 @@ function parseAmount(s: string): number | null {
 
 export const transactionFormSchema = z
   .object({
-    type: z.enum(TRANSACTION_TYPES),
+    type: z.enum(MANUAL_TRANSACTION_TYPES as [typeof MANUAL_TRANSACTION_TYPES[number], ...typeof MANUAL_TRANSACTION_TYPES[number][]]),
     module: z.enum(BUSINESS_MODULES),
     amount: z.string().trim().min(1, 'Enter an amount.').refine((s) => parseAmount(s) !== null, 'Enter a valid amount with up to 2 decimals.'),
     date: z.string().refine(isValidISODate, 'Enter a valid date.'),

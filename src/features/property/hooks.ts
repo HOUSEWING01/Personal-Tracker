@@ -71,6 +71,10 @@ export function useRecordAdvance(propertyId: string) {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: (a: AdvanceInput) => recordAdvanceMovement(propertyId, a),
-    onSuccess: () => Promise.all([refreshProperty(qc), qc.invalidateQueries({ queryKey: ['advance', propertyId] })]),
+    onSuccess: () => Promise.all([
+      refreshProperty(qc), qc.invalidateQueries({ queryKey: ['advance', propertyId] }),
+      qc.invalidateQueries({ queryKey: ['transactions'] }), qc.invalidateQueries({ queryKey: ['finance-summary'] }),
+      qc.invalidateQueries({ queryKey: ['dashboard'] }), qc.invalidateQueries({ queryKey: ['report-breakdown'] }),
+    ]),
   })
 }

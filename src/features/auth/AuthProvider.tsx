@@ -26,7 +26,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => { active = false; off() }
   }, [attempt])
 
-  const token = session?.access_token
+  const sessionKey = session === undefined ? 'loading' : session === null ? 'signed-out' : session.access_token
   useEffect(() => {
     if (!isSupabaseConfigured || session === undefined) return
     if (session === null) { setStatus('signed-out'); return }
@@ -42,7 +42,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       })
     return () => { active = false }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [token, attempt])
+  }, [sessionKey, attempt])
 
   const retry = useCallback(() => { setErrorMessage(null); setStatus('loading'); setAttempt((n) => n + 1) }, [])
   const value = useMemo<AuthValue>(
@@ -51,3 +51,4 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   )
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
 }
+

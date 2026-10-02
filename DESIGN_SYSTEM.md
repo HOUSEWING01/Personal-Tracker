@@ -64,3 +64,8 @@ Visible focus ring, reduced motion respected, sentence-case copy, buttons name t
 
 ## Tabs and status badges (Phase 4)
 Tabs: `role=tablist` with `role=tab` buttons, bottom border 2px primary when selected, selected tab stored in the URL (`?tab=`). Rent status badge always carries text (Paid = sage-soft, Part paid = gold-soft, Unpaid = canvas, plus a separate danger-soft "Overdue" label). Occupied / Vacant / Inactive use the same `Pill`. Lists use table at md+ and cards below, like Transactions.
+
+## Status pills with more tones (Phase 6)
+`features/sheets/StatusPill` has four tones: good = sage-soft + primary text, warn = gold-soft + primary text (a rental still out), danger = danger-soft + danger text (Overdue), neutral = canvas + muted. The label is always text. Quantities in the Stock table are right-aligned tabular figures.
+
+Gold loans reuse `MasterList` and the Sheets `StatusPill`: Active = good, Closed / Gold released = neutral, "Due in N days" = warn (gold-soft), "Overdue by N days" = danger. Status and due state are always text.

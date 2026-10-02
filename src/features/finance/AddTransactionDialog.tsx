@@ -3,7 +3,7 @@ import { useForm } from 'react-hook-form'
 import { Dialog } from '../../components/ui/Dialog'
 import { FormField, fieldA11y, inputClass } from '../../components/forms/FormField'
 import { buttonPrimary, buttonSecondary } from '../../components/ui/FullScreenMessage'
-import { BUSINESS_MODULES, TRANSACTION_TYPES } from '../../types/finance'
+import { BUSINESS_MODULES, MANUAL_TRANSACTION_TYPES } from '../../types/finance'
 import { useCreateTransaction } from './hooks'
 import { MODULE_LABELS, PAYMENT_METHODS, TYPE_LABELS } from './labels'
 import { defaultFormValues, toNewTransaction, transactionFormSchema, type TransactionFormValues } from './transactionForm'
@@ -34,7 +34,7 @@ function Form({ onClose, onSaved }: { onClose: () => void; onSaved: () => void }
     <form onSubmit={onSubmit} noValidate className="grid grid-cols-1 gap-4 md:grid-cols-2">
       <FormField id="tx-type" label="Type" error={errors.type?.message}>
         <select {...register('type')} {...fieldA11y('tx-type', errors.type?.message)} data-autofocus className={inputClass}>
-          {TRANSACTION_TYPES.map((t) => <option key={t} value={t}>{TYPE_LABELS[t]}</option>)}
+          {MANUAL_TRANSACTION_TYPES.map((t) => <option key={t} value={t}>{TYPE_LABELS[t]}</option>)}
         </select>
       </FormField>
       <FormField id="tx-module" label="Module" error={errors.module?.message}>
