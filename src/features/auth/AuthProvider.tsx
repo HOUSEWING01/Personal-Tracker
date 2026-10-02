@@ -17,6 +17,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     auth.getSession()
       .then((s) => active && setSession(s))
       .catch((e: unknown) => {
+        console.error('[auth] getSession failed', e)
         if (!active) return
         setErrorMessage(e instanceof Error ? e.message : 'Could not read your session.')
         setStatus('error')
@@ -34,6 +35,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     auth.checkIsAdmin()
       .then((ok) => active && setStatus(ok ? 'admin' : 'forbidden'))
       .catch((e: unknown) => {
+        console.error('[auth] is_admin check failed', e)
         if (!active) return
         setErrorMessage(e instanceof Error ? e.message : 'Could not verify admin access.')
         setStatus('error')

@@ -1,8 +1,13 @@
 import type { Session } from '@supabase/supabase-js'
 import { supabase } from '../lib/supabase'
+import { withTimeout } from '../lib/withTimeout'
+
+const AUTH_TIMEOUT_MS = 10_000
+const hint = (what: string) =>
+  `${what} took longer than 10 seconds. Check VITE_SUPABASE_URL and the anon key, that the Supabase project is not paused, and close any other tab of this app.`
 
 export async function getSession(): Promise<Session | null> {
-  const { data, error } = await supabase.auth.getSession()
+  const { data, error } = await withTimeout(supabase.auth.getSession(), AUTH_TIMEOUT_MS, hint('Reading your session'))
   if (error) throw error
   return data.session
 }
@@ -25,7 +30,7 @@ export async function signOut(): Promise<void> {
 
 /** Server-side check against public.admin_users via the is_admin() function. */
 export async function checkIsAdmin(): Promise<boolean> {
-  const { data, error } = await supabase.rpc('is_admin')
+  const { data, error } = await withTimeout(supabase.rpc('is_admin'), AUTH_TIMEOUT_MS, hint('Checking admin access'))
   if (error) throw error
   return data === true
 }

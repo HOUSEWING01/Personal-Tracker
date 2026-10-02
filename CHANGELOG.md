@@ -44,3 +44,9 @@
 - Frontend: `types/property.ts`, `services/propertyService.ts`, `features/property/*` (engine, forms, hooks, dialogs, list page, detail page with Rent / Advance / Tenant tabs). Routes `/property` and `/property/:id`.
 - 23 new frontend tests (51 total): engine formulas, form schemas, RentPaymentDialog. `npm run build` passes.
 - Decisions D-012 to D-015. docs/SUPABASE_SETUP.md and supabase/tests/README.md updated.
+
+## Session: deployment (GitHub + Vercel) and auth hang fix
+- Pushed to github.com/HOUSEWING01/Personal-Tracker (main). Deployed to Vercel; Supabase Site URL and Redirect URL set to the Vercel URL.
+- Vercel showed "Supabase is not configured": the VITE_ variables were missing from the build. Fixed on the Vercel side (env vars + redeploy), no code change.
+- Local dev stuck on "Loading…" with no message: session and admin checks could hang silently. Added `lib/withTimeout.ts` (+3 tests); `getSession` and `checkIsAdmin` now fail after 10 s with a message and the existing "Try again" screen. Errors are also logged to the console as `[auth] …`.
+- .gitignore: added `*.zip`.
