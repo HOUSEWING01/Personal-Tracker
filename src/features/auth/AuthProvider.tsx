@@ -26,7 +26,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => { active = false; off() }
   }, [attempt])
 
-  const token = session?.access_token
+  // undefined (loading), null (signed out) and a token must all be distinct, or a signed-out start never leaves 'loading'.
+  const sessionKey = session === undefined ? 'loading' : session === null ? 'signed-out' : session.access_token
   useEffect(() => {
     if (!isSupabaseConfigured || session === undefined) return
     if (session === null) { setStatus('signed-out'); return }
@@ -42,7 +43,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       })
     return () => { active = false }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [token, attempt])
+  }, [sessionKey, attempt])
 
   const retry = useCallback(() => { setErrorMessage(null); setStatus('loading'); setAttempt((n) => n + 1) }, [])
   const value = useMemo<AuthValue>(

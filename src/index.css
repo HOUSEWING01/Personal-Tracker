@@ -26,6 +26,71 @@
 }
 
 html, body, #root { height: 100%; }
-body { background: var(--color-canvas); color: var(--color-ink); font-family: var(--font-sans); -webkit-font-smoothing: antialiased; }
+@supports (height: 100dvh) { html, body, #root { height: 100dvh; } }
+body {
+  background: var(--color-canvas); color: var(--color-ink); font-family: var(--font-sans); -webkit-font-smoothing: antialiased;
+  overscroll-behavior-y: none; -webkit-tap-highlight-color: transparent; text-size-adjust: 100%; -webkit-text-size-adjust: 100%;
+}
 :focus-visible { outline: 2px solid var(--color-primary); outline-offset: 2px; }
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
+
+/* ---- Native controls in the app theme (D-030, D-031) ----
+   Dropdowns and date fields are our own components (components/forms/Select, DatePicker), not styled browser controls. */
+:root { color-scheme: light; accent-color: var(--color-primary); }
+
+@layer base {
+  input, select, textarea { color: var(--color-ink); }
+  input::placeholder, textarea::placeholder { color: #6b7a72; opacity: 1; }
+  /* Tailwind 4 leaves buttons with the arrow cursor. */
+  button:not(:disabled), [role="tab"], [role="option"], summary { cursor: pointer; }
+  ::selection { background: var(--color-sage-soft); color: var(--color-primary); }
+
+  /* Checkboxes, radios, range and progress take the brand green. */
+  input[type="checkbox"], input[type="radio"], input[type="range"], progress { accent-color: var(--color-primary); }
+
+  /* Search fields: the browser's grey clear (x) becomes a green one. */
+  input[type="search"]::-webkit-search-cancel-button {
+    -webkit-appearance: none; appearance: none; height: 1rem; width: 1rem; margin-left: 0.25rem; cursor: pointer; opacity: 0.8;
+    background: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='none' stroke='%230c3b2e' stroke-width='1.8' stroke-linecap='round'><path d='m5 5 10 10M15 5 5 15'/></svg>") center / contain no-repeat;
+  }
+  input[type="search"]::-webkit-search-cancel-button:hover { opacity: 1; }
+
+  /* Browser autofill paints fields pale blue or yellow; use the sage tint instead. */
+  input:-webkit-autofill, input:-webkit-autofill:hover, input:-webkit-autofill:focus,
+  textarea:-webkit-autofill {
+    -webkit-text-fill-color: var(--color-ink);
+    box-shadow: 0 0 0 1000px var(--color-sage-soft) inset;
+    caret-color: var(--color-ink);
+    transition: background-color 9999s ease-out 0s;
+  }
+
+  /* Thin, quiet scrollbars. */
+  * { scrollbar-width: thin; scrollbar-color: var(--color-sage) transparent; }
+  ::-webkit-scrollbar { width: 10px; height: 10px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--color-sage); border-radius: 999px; border: 2px solid var(--color-canvas); }
+  ::-webkit-scrollbar-thumb:hover { background: var(--color-primary); }
+}
+
+/* Toast entrance: a short rise and fade. Reduced-motion users get none (see the rule at the top). */
+@keyframes toast-in { from { opacity: 0; transform: translateY(0.5rem); } to { opacity: 1; transform: none; } }
+.toast-in { animation: toast-in 160ms ease-out; }
+
+/* ---- Mobile and admin-shell polish ---- */
+
+/* iOS Safari zooms the page when a focused field is under 16px. Keep fields at 16px on phones. */
+@media (max-width: 767px) {
+  input:not([type="checkbox"]):not([type="radio"]):not([type="range"]), textarea, [role="combobox"] { font-size: 16px; }
+}
+
+/* Hide a scrollbar but keep scrolling (tab bars, horizontal chips). */
+.scrollbar-hide { scrollbar-width: none; -ms-overflow-style: none; }
+.scrollbar-hide::-webkit-scrollbar { display: none; }
+
+/* Dialog entrance: slides up as a sheet on phones, fades and scales in on desktop. */
+@keyframes sheet-up { from { opacity: 0; transform: translateY(1.5rem); } to { opacity: 1; transform: none; } }
+@keyframes dialog-pop { from { opacity: 0; transform: scale(0.97); } to { opacity: 1; transform: none; } }
+@keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }
+.sheet-in { animation: sheet-up 200ms ease-out; }
+.backdrop-in { animation: fade-in 160ms ease-out; }
+@media (min-width: 768px) { .sheet-in { animation: dialog-pop 160ms ease-out; } }

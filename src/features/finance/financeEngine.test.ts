@@ -38,6 +38,16 @@ describe('financeEngine', () => {
     expect(s.netCashFlow).toBe(97450)
   })
 
+  it('deposits move cash but never revenue, expenses or profit', () => {
+    const s = summarize([tx('customer_payment', 800000), tx('deposit_received', 5000000), tx('deposit_returned', 3000000)])
+    expect(s.revenue).toBe(800000)
+    expect(s.expenses).toBe(0)
+    expect(s.netProfit).toBe(800000)
+    expect(s.cashIn).toBe(5800000)
+    expect(s.cashOut).toBe(3000000)
+    expect(s.netCashFlow).toBe(2800000)
+  })
+
   it('has no float drift (paise integers)', () => {
     const s = summarize([tx('income', 10), tx('income', 20)])
     expect(s.revenue).toBe(30)
@@ -52,5 +62,7 @@ describe('financeEngine', () => {
     expect(signedCashAmount(tx('income', 100))).toBe(100)
     expect(signedCashAmount(tx('expense', 100))).toBe(-100)
     expect(signedCashAmount(tx('adjustment', -100))).toBe(-100)
+    expect(signedCashAmount(tx('deposit_received', 100))).toBe(100)
+    expect(signedCashAmount(tx('deposit_returned', 100))).toBe(-100)
   })
 })

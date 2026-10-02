@@ -1,6 +1,6 @@
 import type { Icon } from '@phosphor-icons/react'
 import {
-  SquaresFour, Buildings, Truck, Stack, Coins, ArrowsLeftRight, ChartBar, GearSix,
+  SquaresFour, Buildings, Truck, Stack, Coins, ArrowsLeftRight, ChartBar,
 } from '@phosphor-icons/react'
 
 export interface NavItem { to: string; label: string; icon: Icon; phase: number }
@@ -18,10 +18,7 @@ export const NAV: NavGroup[] = [
     ],
   },
   { label: 'Finance', items: [{ to: '/finance', label: 'Transactions', icon: ArrowsLeftRight, phase: 3 }] },
-  { items: [
-      { to: '/reports', label: 'Reports', icon: ChartBar, phase: 9 },
-      { to: '/settings', label: 'Settings', icon: GearSix, phase: 10 },
-  ] },
+  { items: [{ to: '/reports', label: 'Reports', icon: ChartBar, phase: 9 }] },
 ]
 
 export const ALL_NAV_ITEMS: NavItem[] = NAV.flatMap((g) => g.items)

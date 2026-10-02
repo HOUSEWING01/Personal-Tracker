@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react'
 
-export const inputClass = 'mt-1 w-full rounded-md border border-line bg-surface px-3 py-2 text-sm aria-[invalid=true]:border-danger'
+export const inputClass = 'mt-1 w-full rounded-md border border-line bg-surface px-3 py-2.5 text-sm aria-[invalid=true]:border-danger md:py-2'
 
 /** Label + control + hint + error. Pass `fieldA11y(id, error)` to the control. */
 export function FormField({ id, label, error, hint, className, children }: {

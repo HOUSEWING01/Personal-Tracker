@@ -7,8 +7,9 @@ import type { Transaction, TransactionType } from '../../types/finance'
  *   revenue        = income + customer_payment - refund
  *   expenses       = expense
  *   netProfit      = revenue - expenses            (operating; excludes investment, loan principal, adjustments)
- *   cashIn         = income + customer_payment + loan_received
- *   cashOut        = expense + investment + loan_repayment + refund
+ *   cashIn         = income + customer_payment + loan_received + deposit_received
+ *   cashOut        = expense + investment + loan_repayment + refund + deposit_returned
+ *   (deposits are refundable: they move cash but never revenue, expenses or profit; D-029)
  *   netCashFlow    = cashIn - cashOut + adjustments (adjustments are signed cash corrections)
  */
 export type CashDirection = 'in' | 'out' | 'signed'
@@ -21,6 +22,8 @@ export const CASH_DIRECTION: Record<TransactionType, CashDirection> = {
   investment: 'out',
   loan_repayment: 'out',
   refund: 'out',
+  deposit_received: 'in',
+  deposit_returned: 'out',
   adjustment: 'signed',
 }
 
@@ -43,8 +46,8 @@ export function summarizeFromTotals(totals: TotalsByType): FinanceSummary {
   const t = (k: TransactionType): Paise => totals[k] ?? 0
   const revenue = t('income') + t('customer_payment') - t('refund')
   const expenses = t('expense')
-  const cashIn = t('income') + t('customer_payment') + t('loan_received')
-  const cashOut = t('expense') + t('investment') + t('loan_repayment') + t('refund')
+  const cashIn = t('income') + t('customer_payment') + t('loan_received') + t('deposit_received')
+  const cashOut = t('expense') + t('investment') + t('loan_repayment') + t('refund') + t('deposit_returned')
   return {
     revenue,
     expenses,

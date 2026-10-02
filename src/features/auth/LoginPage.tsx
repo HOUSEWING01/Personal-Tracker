@@ -1,13 +1,13 @@
 import { useState, type FormEvent } from 'react'
 import { Navigate, useLocation } from 'react-router-dom'
-import { FullScreenMessage, buttonPrimary } from '../../components/ui/FullScreenMessage'
+import { FullScreenMessage, buttonPrimary, buttonSecondary } from '../../components/ui/FullScreenMessage'
 import { signInWithPassword } from '../../services/authService'
 import { useAuth } from './AuthContext'
 
 const inputClass = 'mt-1 w-full rounded-md border border-line bg-surface px-3 py-2 text-sm'
 
 export function LoginPage() {
-  const { status } = useAuth()
+  const { status, email: signedInEmail, errorMessage, retry, signOut } = useAuth()
   const location = useLocation()
   const from = (location.state as { from?: string } | null)?.from ?? '/'
   const [email, setEmail] = useState('')
@@ -17,6 +17,27 @@ export function LoginPage() {
 
   if (status === 'admin') return <Navigate to={from} replace />
   if (status === 'config-missing') return <Navigate to="/" replace />
+  // Signed in, but the admin check did not pass: say so instead of showing the form again with no explanation.
+  if (status === 'forbidden') {
+    return (
+      <FullScreenMessage
+        title="Not authorised"
+        actions={<button type="button" className={buttonSecondary} onClick={() => void signOut()}>Sign out</button>}
+      >
+        {signedInEmail ?? 'This account'} signed in, but it is not in the admin list. Add it to <code>admin_users</code> in Supabase, or sign in with the admin account.
+      </FullScreenMessage>
+    )
+  }
+  if (status === 'error') {
+    return (
+      <FullScreenMessage
+        title="Something went wrong"
+        actions={<button type="button" className={buttonPrimary} onClick={retry}>Try again</button>}
+      >
+        {errorMessage ?? 'Could not verify your access. Check your connection and try again.'}
+      </FullScreenMessage>
+    )
+  }
 
   async function onSubmit(e: FormEvent) {
     e.preventDefault()

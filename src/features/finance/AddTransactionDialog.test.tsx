@@ -55,7 +55,8 @@ describe('AddTransactionDialog', () => {
 
   it('requires a reason for adjustments', async () => {
     const { user } = setup()
-    await user.selectOptions(screen.getByLabelText('Type'), 'adjustment')
+    await user.click(screen.getByLabelText('Type'))
+    await user.click(screen.getByRole('option', { name: 'Adjustment' }))
     await user.type(screen.getByLabelText('Amount (₹)'), '-100')
     await user.click(screen.getByRole('button', { name: 'Save transaction' }))
     expect(await screen.findByText('Explain the adjustment so it can be audited.')).toBeTruthy()

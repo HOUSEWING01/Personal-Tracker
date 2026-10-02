@@ -24,6 +24,7 @@ export function useFinanceSummary(range: Pick<TransactionFilters, 'from' | 'to' 
 export function useCreateTransaction() {
   const qc = useQueryClient()
   return useMutation({
+    meta: { success: 'Transaction added' },
     mutationFn: createTransaction,
     onSuccess: () => Promise.all([
       qc.invalidateQueries({ queryKey: ['transactions'] }),

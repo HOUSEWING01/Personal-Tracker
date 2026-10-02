@@ -64,3 +64,30 @@ Visible focus ring, reduced motion respected, sentence-case copy, buttons name t
 
 ## Tabs and status badges (Phase 4)
 Tabs: `role=tablist` with `role=tab` buttons, bottom border 2px primary when selected, selected tab stored in the URL (`?tab=`). Rent status badge always carries text (Paid = sage-soft, Part paid = gold-soft, Unpaid = canvas, plus a separate danger-soft "Overdue" label). Occupied / Vacant / Inactive use the same `Pill`. Lists use table at md+ and cards below, like Transactions.
+
+## Status pills with more tones (Phase 6)
+`features/sheets/StatusPill` has four tones: good = sage-soft + primary text, warn = gold-soft + primary text (a rental still out), danger = danger-soft + danger text (Overdue), neutral = canvas + muted. The label is always text. Quantities in the Stock table are right-aligned tabular figures.
+
+Gold loans reuse `MasterList` and the Sheets `StatusPill`: Active = good, Closed / Gold released = neutral, "Due in N days" = warn (gold-soft), "Overdue by N days" = danger. Status and due state are always text.
+
+## Native controls (D-030, D-031)
+Browser-drawn pieces that cannot take our theme are replaced by our own components in `components/forms/`:
+- `Select` / `FormSelect` replace `<select>`. Same `<option>` children. Combobox + listbox: Arrow keys, Home / End, type-ahead, Enter / Space pick, Esc closes. The list opens in a portal (never clipped by a dialog), flips above the field when there is no room below. Chosen row = `sage-soft` + check mark; placeholder (`value=""`) is `muted`.
+- `DatePicker` / `FormDatePicker` replace `<input type="date">`. Value stays a `'YYYY-MM-DD'` string (or `''`). Field shows `03 Oct 2026`. Calendar: day view, click the month name for months, then years; Today and Clear in the footer. Keys: arrows (day / week), PageUp / PageDown (month, Shift = year), Home / End (week), Esc closes. Today is IST (D-004).
+- Use `FormSelect` / `FormDatePicker` with react-hook-form (`control`, not `register`); use `Select` / `DatePicker` with plain state or URL state. Put `inputClass` (forms) or the page's `field` class (filter bars) on them as before; the component adds the flex layout and chevron / calendar icon itself.
+
+Still global CSS in `src/index.css`: `accent-color` primary (checkbox, radio, range), green search-clear (x), `sage-soft` autofill, text selection, thin sage scrollbars. Left native on purpose: the `title` tooltip on two truncated texts (browsers do not allow styling it).
+
+Rules for new fields: never add a bare `<select>` or `type="date"` / `"month"` / `"time"` input; use the components above.
+
+## Admin UX patterns (mobile-first pass)
+Modelled on the trips.ulaa admin. One shared piece per pattern; do not hand-roll these in a page.
+- `Dialog` + `DialogActions`: fixed header, body scrolls by itself, Save / Cancel stay pinned at the bottom (side by side on phones, right-aligned from md). Bottom sheet on phones sized with `dvh`, centred card from md. Put `<DialogActions>` as the last child of the form (it spans every grid column).
+- `AppShell`: desktop sidebar collapses to an icon rail (remembered in localStorage); phone top bar shows the current section; safe-area padding for notches; room under the content for the floating add button.
+- `ListToolbar` (+ `filterLabel`, `filterField`): search always visible; other filters behind a "Filters (n)" button on phones, inline from md; "n filters active / Clear all".
+- `AddButton`: normal button from sm up, floating "+" on phones. One per screen.
+- `Pagination`: "1-10 of 42" with Previous / Next, used by every list.
+- `TabBar`: scrolls sideways on phones, selected tab scrolls into view, arrow-key support.
+- `StatTile` / `statGrid`: two columns on phones (odd last tile spans), four on desktop.
+- Lists: table from md, cards below; whole property card is tappable; loading shows skeleton rows.
+- Inputs are 16px on phones (no iOS zoom) and 44px tall; buttons 44px tall on phones.

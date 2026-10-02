@@ -13,20 +13,20 @@ function TypeBadge({ type }: { type: Transaction['type'] }) {
 export function TransactionList({ rows }: { rows: Transaction[] }) {
   return (
     <>
-      <div className="hidden overflow-x-auto rounded-md border border-line bg-surface md:block">
+      <div className="hidden overflow-x-auto rounded-lg border border-line bg-surface md:block">
         <table className="w-full text-sm">
-          <thead className="border-b border-line text-left text-xs text-muted">
+          <thead className="border-b border-line bg-canvas/60 text-left text-xs text-muted">
             <tr>
-              <th scope="col" className="px-4 py-2 font-medium">Date</th>
-              <th scope="col" className="px-4 py-2 font-medium">Type</th>
-              <th scope="col" className="px-4 py-2 font-medium">Module</th>
-              <th scope="col" className="px-4 py-2 font-medium">Description</th>
-              <th scope="col" className="px-4 py-2 text-right font-medium">Amount</th>
+              <th scope="col" className="px-4 py-2.5 font-medium">Date</th>
+              <th scope="col" className="px-4 py-2.5 font-medium">Type</th>
+              <th scope="col" className="px-4 py-2.5 font-medium">Module</th>
+              <th scope="col" className="px-4 py-2.5 font-medium">Description</th>
+              <th scope="col" className="px-4 py-2.5 text-right font-medium">Amount</th>
             </tr>
           </thead>
           <tbody>
             {rows.map((r) => (
-              <tr key={r.id} className="border-b border-line last:border-0">
+              <tr key={r.id} className="border-b border-line last:border-0 hover:bg-canvas/50">
                 <td className="whitespace-nowrap px-4 py-2.5">{formatDate(r.date)}</td>
                 <td className="px-4 py-2.5"><TypeBadge type={r.type} /></td>
                 <td className="px-4 py-2.5 text-muted">{MODULE_LABELS[r.module]}</td>
@@ -40,12 +40,12 @@ export function TransactionList({ rows }: { rows: Transaction[] }) {
 
       <ul className="flex flex-col gap-2 md:hidden">
         {rows.map((r) => (
-          <li key={r.id} className="rounded-md border border-line bg-surface px-4 py-3">
+          <li key={r.id} className="rounded-lg border border-line bg-surface p-4">
             <div className="flex items-start justify-between gap-3">
               <TypeBadge type={r.type} />
               <span className="font-semibold tabular-nums">{formatSignedINR(signedCashAmount(r))}</span>
             </div>
-            <p className="mt-2 text-sm">{r.description ?? '—'}</p>
+            <p className="mt-2 break-words text-sm">{r.description ?? '—'}</p>
             <p className="mt-1 text-xs text-muted">{formatDate(r.date)} · {MODULE_LABELS[r.module]}</p>
           </li>
         ))}

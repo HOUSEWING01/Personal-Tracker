@@ -1,8 +1,10 @@
 import { useEffect, useState } from 'react'
-import { Plus } from '@phosphor-icons/react'
 import { PageHeader } from '../../components/ui/PageHeader'
 import { EmptyState } from '../../components/ui/EmptyState'
 import { buttonPrimary, buttonSecondary } from '../../components/ui/FullScreenMessage'
+import { AddButton } from '../../components/ui/AddButton'
+import { ListToolbar, filterField, filterLabel } from '../../components/ui/ListToolbar'
+import { Pagination } from '../../components/ui/Pagination'
 import { useUrlState } from '../../hooks/useUrlState'
 import { currentMonthRangeIST, isValidISODate } from '../../lib/dates'
 import { BUSINESS_MODULES, TRANSACTION_TYPES, type BusinessModule, type TransactionType } from '../../types/finance'
@@ -12,21 +14,15 @@ import { MODULE_LABELS, TYPE_LABELS } from './labels'
 import { AddTransactionDialog } from './AddTransactionDialog'
 import { SummaryStrip } from './SummaryStrip'
 import { TransactionList } from './TransactionList'
+import { Select } from '../../components/forms/Select'
+import { DatePicker } from '../../components/forms/DatePicker'
 
 const DEFAULTS = { type: 'all', module: 'all', from: '', to: '', q: '', sort: 'newest', page: '1' }
-const field = 'mt-1 w-full rounded-md border border-line bg-surface px-3 py-2 text-sm'
 
 export function TransactionsPage() {
   const [p, update] = useUrlState(DEFAULTS)
   const [qText, setQText] = useState(p.q)
   const [adding, setAdding] = useState(false)
-  const [notice, setNotice] = useState(false)
-
-  useEffect(() => {
-    if (!notice) return
-    const id = setTimeout(() => setNotice(false), 5000)
-    return () => clearTimeout(id)
-  }, [notice])
 
   const type = (TRANSACTION_TYPES as readonly string[]).includes(p.type) ? (p.type as TransactionType) : undefined
   const module = (BUSINESS_MODULES as readonly string[]).includes(p.module) ? (p.module as BusinessModule) : undefined
@@ -58,13 +54,9 @@ export function TransactionsPage() {
       <PageHeader
         title="Transactions"
         description="Every income, expense, loan and payment across all four businesses."
-        actions={<button type="button" className={`${buttonPrimary} gap-1.5`} onClick={() => setAdding(true)}><Plus size={16} aria-hidden /> Add transaction</button>}
+        actions={<AddButton label="Add transaction" onClick={() => setAdding(true)} />}
       />
-      <div aria-live="polite">
-        {notice && <p role="status" className="mb-4 rounded-md bg-sage-soft px-3 py-2 text-sm text-primary">Transaction added.</p>}
-      </div>
-      <AddTransactionDialog open={adding} onClose={() => setAdding(false)} onSaved={() => { setAdding(false); setNotice(true) }} />
-
+      <AddTransactionDialog open={adding} onClose={() => setAdding(false)} onSaved={() => setAdding(false)} />
 
       <SummaryStrip summary={summary.data} loading={summary.isLoading} />
       {summary.isError && (
@@ -74,39 +66,41 @@ export function TransactionsPage() {
       )}
       <p className="mt-2 text-xs text-muted">Totals follow the date range and module. They ignore type and search.</p>
 
-      <form className="mt-6 grid grid-cols-2 gap-3 md:grid-cols-6" onSubmit={(e) => e.preventDefault()} role="search">
-        <label className="col-span-2 text-sm font-medium md:col-span-2">Search description
-          <input type="search" value={qText} onChange={(e) => setQText(e.target.value)} className={field} />
-        </label>
-        <label className="text-sm font-medium">Type
-          <select value={type ?? 'all'} onChange={(e) => update({ type: e.target.value })} className={field}>
-            <option value="all">All types</option>
-            {TRANSACTION_TYPES.map((t) => <option key={t} value={t}>{TYPE_LABELS[t]}</option>)}
-          </select>
-        </label>
-        <label className="text-sm font-medium">Module
-          <select value={module ?? 'all'} onChange={(e) => update({ module: e.target.value })} className={field}>
-            <option value="all">All modules</option>
-            {BUSINESS_MODULES.map((m) => <option key={m} value={m}>{MODULE_LABELS[m]}</option>)}
-          </select>
-        </label>
-        <label className="text-sm font-medium">From
-          <input type="date" value={from ?? ''} onChange={(e) => update({ from: e.target.value })} className={field} />
-        </label>
-        <label className="text-sm font-medium">To
-          <input type="date" value={to ?? ''} onChange={(e) => update({ to: e.target.value })} className={field} />
-        </label>
-      </form>
-
-      <div className="mt-3 flex flex-wrap items-center gap-2">
-        <button type="button" className={buttonSecondary} onClick={() => update({ from: month.from, to: month.to })}>This month</button>
-        <button type="button" className={buttonSecondary} onClick={() => update({ from: '', to: '' })}>All time</button>
-        <label className="ml-auto flex items-center gap-2 text-sm">Sort
-          <select value={sort} onChange={(e) => update({ sort: e.target.value })} className="rounded-md border border-line bg-surface px-2 py-1.5 text-sm">
-            <option value="newest">Newest first</option>
-            <option value="oldest">Oldest first</option>
-          </select>
-        </label>
+      <div className="mt-5">
+        <ListToolbar
+          searchLabel="Search description" searchValue={qText} onSearch={setQText}
+          activeCount={[type, module, from, to, p.q].filter(Boolean).length}
+          onClear={() => { setQText(''); update({ type: 'all', module: 'all', from: '', to: '', q: '' }) }}
+        >
+          <label className={filterLabel}>Type
+            <Select value={type ?? 'all'} onChange={(v) => update({ type: v })} className={filterField}>
+              <option value="all">All types</option>
+              {TRANSACTION_TYPES.map((t) => <option key={t} value={t}>{TYPE_LABELS[t]}</option>)}
+            </Select>
+          </label>
+          <label className={filterLabel}>Module
+            <Select value={module ?? 'all'} onChange={(v) => update({ module: v })} className={filterField}>
+              <option value="all">All modules</option>
+              {BUSINESS_MODULES.map((m) => <option key={m} value={m}>{MODULE_LABELS[m]}</option>)}
+            </Select>
+          </label>
+          <label className={filterLabel}>From
+            <DatePicker value={from ?? ''} onChange={(v) => update({ from: v })} className={filterField} />
+          </label>
+          <label className={filterLabel}>To
+            <DatePicker value={to ?? ''} onChange={(v) => update({ to: v })} className={filterField} />
+          </label>
+          <div className="col-span-2 flex flex-wrap items-center gap-2 md:col-span-4">
+            <button type="button" className={buttonSecondary} onClick={() => update({ from: month.from, to: month.to })}>This month</button>
+            <button type="button" className={buttonSecondary} onClick={() => update({ from: '', to: '' })}>All time</button>
+            <label className="ml-auto flex items-center gap-2 text-sm">Sort
+              <Select value={sort} onChange={(v) => update({ sort: v })} className="rounded-md border border-line bg-surface px-2 py-1.5 text-sm">
+                <option value="newest">Newest first</option>
+                <option value="oldest">Oldest first</option>
+              </Select>
+            </label>
+          </div>
+        </ListToolbar>
       </div>
 
       <div className="mt-4">
@@ -115,7 +109,7 @@ export function TransactionsPage() {
         ) : list.isLoading ? (
           <p className="py-10 text-center text-sm text-muted" role="status">Loading transactions…</p>
         ) : list.isError ? (
-          <div role="alert" className="rounded-md border border-line bg-surface px-6 py-8 text-center">
+          <div role="alert" className="rounded-lg border border-line bg-surface px-6 py-8 text-center">
             <p className="text-sm font-medium">Could not load transactions</p>
             <p className="mt-1 text-sm text-muted">Check your connection and try again.</p>
             <button type="button" className={`${buttonPrimary} mt-4`} onClick={() => void list.refetch()}>Try again</button>
@@ -129,15 +123,7 @@ export function TransactionsPage() {
         ) : (
           <>
             <TransactionList rows={list.data?.rows ?? []} />
-            <div className="mt-3 flex items-center justify-between text-sm">
-              <span className="text-muted">
-                {(page - 1) * PAGE_SIZE + 1}–{Math.min(page * PAGE_SIZE, total)} of {total}
-              </span>
-              <span className="flex gap-2">
-                <button type="button" className={buttonSecondary} disabled={page <= 1} onClick={() => update({ page: String(page - 1) })}>Previous</button>
-                <button type="button" className={buttonSecondary} disabled={page >= totalPages} onClick={() => update({ page: String(page + 1) })}>Next</button>
-              </span>
-            </div>
+            <Pagination page={page} pageSize={PAGE_SIZE} total={total} onPage={(n) => update({ page: String(n) })} noun="transactions" />
           </>
         )}
       </div>

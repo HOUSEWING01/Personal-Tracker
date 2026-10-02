@@ -1,6 +1,6 @@
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useForm } from 'react-hook-form'
-import { Dialog } from '../../components/ui/Dialog'
+import { Dialog, DialogActions } from '../../components/ui/Dialog'
 import { FormField, fieldA11y, inputClass } from '../../components/forms/FormField'
 import { buttonPrimary, buttonSecondary } from '../../components/ui/FullScreenMessage'
 import { PROPERTY_TYPES, type PropertyOverview } from '../../types/property'
@@ -8,6 +8,7 @@ import { useSaveProperty } from './hooks'
 import { PROPERTY_STATUS_LABELS, PROPERTY_TYPE_LABELS } from './labels'
 import { defaultPropertyValues, propertyFormSchema, toPropertyInput, type PropertyFormValues } from './propertyForms'
 import { submitError } from './submitError'
+import { FormSelect } from '../../components/forms/Select'
 
 function initial(p?: PropertyOverview): PropertyFormValues {
   if (!p) return defaultPropertyValues()
@@ -19,7 +20,7 @@ function initial(p?: PropertyOverview): PropertyFormValues {
 
 function Form({ property, onClose, onSaved }: { property?: PropertyOverview; onClose: () => void; onSaved: (id: string) => void }) {
   const save = useSaveProperty(property?.id)
-  const { register, handleSubmit, formState: { errors } } = useForm<PropertyFormValues>({
+  const { register, handleSubmit, control, formState: { errors } } = useForm<PropertyFormValues>({
     resolver: zodResolver(propertyFormSchema), defaultValues: initial(property),
   })
   const onSubmit = handleSubmit(async (values) => {
@@ -32,18 +33,18 @@ function Form({ property, onClose, onSaved }: { property?: PropertyOverview; onC
         <input {...register('name')} {...fieldA11y('pr-name', errors.name?.message)} data-autofocus autoComplete="off" className={inputClass} />
       </FormField>
       <FormField id="pr-type" label="Type" error={errors.type?.message}>
-        <select {...register('type')} {...fieldA11y('pr-type', errors.type?.message)} className={inputClass}>
+        <FormSelect control={control} name="type" {...fieldA11y('pr-type', errors.type?.message)} className={inputClass}>
           {PROPERTY_TYPES.map((t) => <option key={t} value={t}>{PROPERTY_TYPE_LABELS[t]}</option>)}
-        </select>
+        </FormSelect>
       </FormField>
       <FormField id="pr-rent" label="Monthly rent (₹)" error={errors.monthlyRent?.message}
         hint={property ? 'A new rent applies to months not yet created. Past months keep their rent.' : 'Up to 2 decimals.'}>
         <input {...register('monthlyRent')} {...fieldA11y('pr-rent', errors.monthlyRent?.message, true)} inputMode="decimal" autoComplete="off" placeholder="0.00" className={inputClass} />
       </FormField>
       <FormField id="pr-status" label="Status" error={errors.status?.message} hint="Inactive properties stop creating new monthly rent.">
-        <select {...register('status')} {...fieldA11y('pr-status', errors.status?.message, true)} className={inputClass}>
+        <FormSelect control={control} name="status" {...fieldA11y('pr-status', errors.status?.message, true)} className={inputClass}>
           {(['active', 'inactive'] as const).map((s) => <option key={s} value={s}>{PROPERTY_STATUS_LABELS[s]}</option>)}
-        </select>
+        </FormSelect>
       </FormField>
       <FormField id="pr-address" label="Address (optional)" error={errors.address?.message}>
         <input {...register('address')} {...fieldA11y('pr-address', errors.address?.message)} autoComplete="off" className={inputClass} />
@@ -52,10 +53,10 @@ function Form({ property, onClose, onSaved }: { property?: PropertyOverview; onC
         <input {...register('description')} {...fieldA11y('pr-desc', errors.description?.message)} autoComplete="off" className={inputClass} />
       </FormField>
       {save.isError && <p role="alert" className="rounded-md bg-danger-soft px-3 py-2 text-sm text-danger md:col-span-2">{submitError(save.error, 'property')}</p>}
-      <div className="flex justify-end gap-2 md:col-span-2">
+      <DialogActions>
         <button type="button" className={buttonSecondary} onClick={onClose}>Cancel</button>
         <button type="submit" className={buttonPrimary} disabled={save.isPending}>{save.isPending ? 'Saving…' : 'Save property'}</button>
-      </div>
+      </DialogActions>
     </form>
   )
 }
