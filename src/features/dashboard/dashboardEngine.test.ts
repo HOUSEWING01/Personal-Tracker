@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import type { GoldLoan } from '../../types/gold'
-import { receivablesPaise, summarizeGold } from './dashboardEngine'
+import { receivablesPaise, summarizeGold, debtParts, totalDebtPaise } from './dashboardEngine'
 
 const base: GoldLoan = {
   id: 'a', personName: 'Ravi', mobile: null, goldDescription: 'chain', goldWeightGrams: null, bank: 'SBI',
@@ -19,5 +19,26 @@ describe('dashboard engine', () => {
     expect(s.upcoming.map((u) => u.loan.id)).toEqual(['b', 'a'])
     expect(s.overdueCount).toBe(1)
     expect(s.accruedInterestPaise).toBeGreaterThan(0)
+  })
+})
+
+describe('totalDebtPaise', () => {
+  it('adds what is left on vehicle loans to the gold loan balance', () => {
+    expect(totalDebtPaise(1_000_000, 300_000, 200_000)).toBe(900_000)
+  })
+  it('never counts a negative vehicle balance (repayments include interest)', () => {
+    expect(totalDebtPaise(1_000_000, 1_200_000, 200_000)).toBe(200_000)
+  })
+  it('is zero with no loans', () => {
+    expect(totalDebtPaise(0, 0, 0)).toBe(0)
+  })
+})
+
+describe('debtParts', () => {
+  it('returns both parts and their total', () => {
+    expect(debtParts(1_000_000, 300_000, 200_000)).toEqual({ vehiclePaise: 700_000, goldPaise: 200_000, totalPaise: 900_000 })
+  })
+  it('floors each part at zero', () => {
+    expect(debtParts(100, 500, -50)).toEqual({ vehiclePaise: 0, goldPaise: 0, totalPaise: 0 })
   })
 })

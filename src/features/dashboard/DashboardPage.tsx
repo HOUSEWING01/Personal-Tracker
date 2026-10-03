@@ -7,7 +7,7 @@ import { useUrlState } from '../../hooks/useUrlState'
 import { useFinanceSummary } from '../finance/hooks'
 import { dueLabel } from '../gold/goldEngine'
 import { StatusPill } from '../sheets/StatusPill'
-import { receivablesPaise, summarizeGold } from './dashboardEngine'
+import { debtParts, receivablesPaise, summarizeGold } from './dashboardEngine'
 import { useActiveGoldLoans, useDashboardCounts } from './hooks'
 
 const DEFAULTS = { period: 'month' }
@@ -63,14 +63,17 @@ export function DashboardPage() {
   const counts = useDashboardCounts(today, month.from, month.to)
   const all = useFinanceSummary(range, true)
   const transport = useFinanceSummary({ ...range, module: 'transport' }, true)
-  // Shown beside the period switch whichever period is chosen. On "All time" it is the same query as `all`, so it is shared.
+  // The overall strip under the title is always all-time, whichever period the tiles below show. On "All time" these are
+  // the same queries as `all` / `transport`, so they are shared.
   const allTime = useFinanceSummary({}, true)
+  const allTimeTransport = useFinanceSummary({ module: 'transport' }, true)
   const gold = useActiveGoldLoans()
   const g = gold.data ? summarizeGold(gold.data, today) : undefined
   const c = counts.data
   const f = all.data
   const t = transport.data
-  const lifetimeProfit = allTime.data?.netProfit
+  const overall = allTime.data
+  const debt = allTimeTransport.data && g ? debtParts(allTimeTransport.data.loanReceived, allTimeTransport.data.loanRepayments, g.estimatedBalancePaise) : undefined
   const receivables = c ? receivablesPaise(c.rentOutstandingPaise, c.sheetOutstandingPaise) : undefined
   const money = (v?: number) => (v === undefined ? dash : formatINR(v))
   const num = (v?: number) => (v === undefined ? dash : String(v))
@@ -87,7 +90,7 @@ export function DashboardPage() {
         title="Dashboard"
         description="Money and operations across every module."
         actions={
-          <div className="flex w-full items-center justify-between gap-3 sm:w-auto sm:gap-5">
+          <div className="flex items-center">
             <div role="group" aria-label="Period for money figures" className="flex rounded-md border border-line bg-surface p-0.5 text-sm">
               {([['month', 'This month'], ['all', 'All time']] as const).map(([id, label]) => (
                 <button
@@ -96,15 +99,24 @@ export function DashboardPage() {
                 >{label}</button>
               ))}
             </div>
-            <div className="text-right" aria-live="polite">
-              <div className="text-xs text-muted">All-time profit</div>
-              <div className={`text-sm font-semibold tabular-nums ${(lifetimeProfit ?? 0) < 0 ? 'text-danger' : ''}`}>
-                {lifetimeProfit === undefined ? dash : `${lifetimeProfit < 0 ? '−' : ''}${formatINR(Math.abs(lifetimeProfit))}`}
-              </div>
-            </div>
           </div>
         }
       />
+
+      <section className="mb-3 rounded-lg border border-line bg-surface p-3" aria-labelledby="dash-overall" aria-busy={allTime.isLoading || allTimeTransport.isLoading || gold.isLoading}>
+        <h2 id="dash-overall" className="text-xs font-semibold uppercase tracking-wide text-muted">All modules · all time</h2>
+        {allTime.isError ? retry(() => void allTime.refetch()) : (
+          <dl className="mt-2 grid grid-cols-3 gap-x-3">
+            <Stat label="Total revenue" value={money(overall?.revenue)} />
+            <Stat label="Total profit" value={money(overall?.netProfit)} negative={(overall?.netProfit ?? 0) < 0} />
+            <Stat label="Total debt" value={money(debt?.totalPaise)} hint="Estimate" />
+            <div className="col-span-3 mt-3 grid grid-cols-2 gap-x-3 border-t border-line pt-3">
+              <Stat label="Debt · vehicle loans" value={money(debt?.vehiclePaise)} hint="Received − repaid" />
+              <Stat label="Debt · gold loans" value={money(debt?.goldPaise)} hint="Active, with interest" />
+            </div>
+          </dl>
+        )}
+      </section>
 
       {attention.length > 0 && (
         <section aria-labelledby="dash-attention" className="rounded-md bg-gold-soft px-3 py-2">

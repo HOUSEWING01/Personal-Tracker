@@ -64,13 +64,29 @@ function buildColumns(today: string): Column<GoldLoan>[] {
   ]
 }
 
+/** Shown on a collapsed phone card: amount, balance or payments, status and any due warning. */
+function buildSummary(today: string) {
+  return (l: GoldLoan) => {
+    const due = dueState(l, today)
+    return (
+      <>
+        <span className="tabular-nums">{formatINR(l.principalPaise)}</span>
+        {l.status === 'active' && <span className="tabular-nums text-muted">Balance {formatINR(estimatedBalancePaise(l, l.paidPaise, today))}</span>}
+        <StatusPill tone={l.status === 'active' ? 'good' : 'neutral'}>{GOLD_STATUS_LABELS[l.status]}</StatusPill>
+        {due && <StatusPill tone={due.kind === 'overdue' ? 'danger' : 'warn'}>{dueLabel(due)}</StatusPill>}
+      </>
+    )
+  }
+}
+
 export function GoldLoansPage() {
   const c = useListControls()
   const status = (GOLD_LOAN_STATUSES as readonly string[]).includes(c.status) ? (c.status as GoldLoanStatus) : undefined
   const list = useGoldLoans({ status, q: c.q }, c.page)
   const [dialog, setDialog] = useState<{ loan?: GoldLoan } | null>(null)
   const [paymentsFor, setPaymentsFor] = useState<string | null>(null)
-  const columns = buildColumns(todayIST())
+  const today = todayIST()
+  const columns = buildColumns(today)
 
   // Look the loan up in the freshly loaded list so totals update right after a payment is saved.
   const paymentsLoan = paymentsFor ? list.data?.rows.find((l) => l.id === paymentsFor) : undefined
@@ -86,7 +102,7 @@ export function GoldLoansPage() {
         page={c.page} onPage={c.setPage} qText={c.qText} onSearch={c.setQText} searchLabel="Search by person, bank or gold"
         status={{ value: status ?? 'all', onChange: c.setStatus, options: GOLD_LOAN_STATUSES.map((s) => ({ value: s, label: GOLD_STATUS_LABELS[s] })) }}
         filtered={Boolean(status || c.q)} onClear={c.clear}
-        onAdd={() => setDialog({})} onEdit={(loan) => setDialog({ loan })}
+        onAdd={() => setDialog({})} onEdit={(loan) => setDialog({ loan })} collapsedSummary={buildSummary(today)}
         rowActions={(l) => (
           <button type="button" className={buttonSecondary} aria-label={`Payments for ${l.personName} gold loan`} onClick={() => setPaymentsFor(l.id)}>Payments</button>
         )}

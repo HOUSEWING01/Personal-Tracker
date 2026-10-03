@@ -38,3 +38,19 @@ export function summarizeGold(active: readonly GoldLoan[], today: string): GoldS
   upcoming.sort((a, b) => (a.loan.dueDate ?? '').localeCompare(b.loan.dueDate ?? ''))
   return { activeLoans: active.length, borrowedPaise: borrowed, accruedInterestPaise: interest, estimatedBalancePaise: balance, upcoming, overdueCount }
 }
+
+/**
+ * Total debt (an estimate) = vehicle loans still owed + gold loans still owed.
+ * Vehicle loans: amount received minus everything repaid so far, never below zero. Interest is not split out of the
+ * repayments (D-009), so this can understate what is left; it is an estimate, not a lender's figure.
+ * Gold loans: the estimated balance of the active loans (principal plus accrued interest, less payments).
+ */
+export function debtParts(vehicleLoanReceived: Paise, vehicleLoanRepaid: Paise, goldEstimatedBalance: Paise): { vehiclePaise: Paise; goldPaise: Paise; totalPaise: Paise } {
+  const vehiclePaise = Math.max(0, vehicleLoanReceived - vehicleLoanRepaid)
+  const goldPaise = Math.max(0, goldEstimatedBalance)
+  return { vehiclePaise, goldPaise, totalPaise: vehiclePaise + goldPaise }
+}
+
+export function totalDebtPaise(vehicleLoanReceived: Paise, vehicleLoanRepaid: Paise, goldEstimatedBalance: Paise): Paise {
+  return debtParts(vehicleLoanReceived, vehicleLoanRepaid, goldEstimatedBalance).totalPaise
+}
