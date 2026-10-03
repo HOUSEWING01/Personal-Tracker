@@ -15,10 +15,10 @@ export function useRentSync(propertyId?: string) {
   return useQuery({ queryKey: ['rent-sync', propertyId ?? 'all'], queryFn: () => ensureRentCharges(propertyId) })
 }
 
-export function useProperties(filters: PropertyFilters, page: number, enabled: boolean) {
+export function useProperties(filters: PropertyFilters, page: number, enabled: boolean, pageSize = PROPERTY_PAGE_SIZE) {
   return useQuery({
-    queryKey: ['properties', filters, page],
-    queryFn: () => listProperties(filters, { page, pageSize: PROPERTY_PAGE_SIZE }),
+    queryKey: ['properties', filters, page, pageSize],
+    queryFn: () => listProperties(filters, { page, pageSize }),
     placeholderData: keepPreviousData,
     enabled,
   })

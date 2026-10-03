@@ -7,9 +7,9 @@ import { buttonSecondary } from './FullScreenMessage'
  * (with a count of the active ones) so they do not push the list off screen; from md up they show inline.
  * Filter children are normally `<label>` + Select / DatePicker blocks; the panel is a 2-column grid on phones, 4 from md.
  */
-export function ListToolbar({ searchLabel, searchValue, onSearch, activeCount = 0, onClear, children }: {
+export function ListToolbar({ searchLabel, searchValue, onSearch, activeCount = 0, onClear, quick, children }: {
   searchLabel: string; searchValue: string; onSearch: (v: string) => void
-  activeCount?: number; onClear?: () => void; children?: ReactNode
+  activeCount?: number; onClear?: () => void; /** Always-visible quick toggle beside the search box (e.g. a "Due" chip). */ quick?: ReactNode; children?: ReactNode
 }) {
   const [open, setOpen] = useState(false)
   const panelId = useId()

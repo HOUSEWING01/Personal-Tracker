@@ -60,36 +60,85 @@ export function parseKmHundredths(s: string): number | null {
   return Number.isSafeInteger(n) ? n : null
 }
 
+const MAX_ODOMETER_HUNDREDTHS = 999_999_999 // 9,999,999.99 km (matches numeric(12,2))
+
+/** Distance in hundredths of a km: ending - starting odometer, or the typed distance for old trips without readings. */
+export function tripDistanceHundredths(start: string, end: string, manual: string): number {
+  const s = parseKmHundredths(start), e = parseKmHundredths(end)
+  if (s !== null && e !== null && e > s) return e - s
+  return parseKmHundredths(manual) ?? 0
+}
+
 export const tripFormSchema = z.object({
   vehicleId: z.string().min(1, 'Choose a vehicle.'),
   driverId: z.string().min(1, 'Choose a driver.'),
   customerId: z.string().min(1, 'Choose a customer.'),
   fromLocation: z.string().trim().min(1, 'Enter where the trip starts.').max(100, 'Keep this under 100 characters.'),
   toLocation: z.string().trim().min(1, 'Enter where the trip ends.').max(100, 'Keep this under 100 characters.'),
-  distanceKm: z.string().trim().min(1, 'Enter the distance in KM.')
-    .refine((s) => parseKmHundredths(s) !== null, 'Enter a valid distance with up to 2 decimals.')
-    .refine((s) => { const n = parseKmHundredths(s); return n === null || n > 0 }, 'Distance must be greater than zero.')
-    .refine((s) => { const n = parseKmHundredths(s); return n === null || n <= MAX_KM_HUNDREDTHS }, 'Distance is too large.'),
+  odometerStart: z.string().trim(),
+  odometerEnd: z.string().trim(),
+  /** Typed only for old trips that have no odometer readings; otherwise worked out from the odometer. */
+  distanceKm: z.string().trim(),
   ratePerKm: z.string().trim().min(1, 'Enter the rate per KM.')
     .refine((s) => parseMoney(s) !== null, 'Enter a valid amount with up to 2 decimals.')
     .refine((s) => (parseMoney(s) ?? 1) > 0, 'Rate must be greater than zero.'),
   driverPayment: optionalPrice,
+  /** Fuel and toll are entered in the trip itself. Blank = none. */
+  fuelLitres: z.string().trim(),
+  fuelPrice: z.string().trim(),
+  tollAmount: z.string().trim(),
   tripDate: z.string().refine(isValidISODate, 'Enter the trip date.'),
   status: z.enum(TRIP_STATUSES),
   notes: text(500, 'Keep the notes under 500 characters.'),
+}).superRefine((v, ctx) => {
+  const add = (path: 'odometerStart' | 'odometerEnd' | 'distanceKm', message: string) => ctx.addIssue({ code: 'custom', path: [path], message })
+  const s = parseKmHundredths(v.odometerStart), e = parseKmHundredths(v.odometerEnd)
+  const badReading = 'Enter a valid reading with up to 2 decimals.'
+  if (v.odometerStart && (s === null || s > MAX_ODOMETER_HUNDREDTHS)) add('odometerStart', badReading)
+  if (v.odometerEnd && (e === null || e > MAX_ODOMETER_HUNDREDTHS)) add('odometerEnd', badReading)
+  if (v.odometerEnd && !v.odometerStart) add('odometerStart', 'Enter the starting odometer first.')
+  if (s !== null && e !== null && e <= s) add('odometerEnd', 'Ending reading must be more than the starting reading.')
+  if (v.distanceKm) {
+    const d = parseKmHundredths(v.distanceKm)
+    if (d === null) add('distanceKm', 'Enter a valid distance with up to 2 decimals.')
+    else if (d <= 0) add('distanceKm', 'Distance must be greater than zero.')
+    else if (d > MAX_KM_HUNDREDTHS) add('distanceKm', 'Distance is too large.')
+  }
+  if (!v.odometerStart && !v.distanceKm) add('odometerStart', 'Enter the starting odometer.')
+  const addCost = (path: 'fuelLitres' | 'fuelPrice' | 'tollAmount', message: string) => ctx.addIssue({ code: 'custom', path: [path], message })
+  const l = parseKmHundredths(v.fuelLitres), p = parseMoney(v.fuelPrice)
+  if (v.fuelLitres && (l === null || l <= 0 || l > MAX_LITRES_HUNDREDTHS)) addCost('fuelLitres', 'Enter litres above zero, with up to 2 decimals.')
+  if (v.fuelPrice && (p === null || p <= 0 || p > MAX_PRICE_PAISE)) addCost('fuelPrice', 'Enter the price per litre above zero.')
+  if (v.fuelLitres && !v.fuelPrice) addCost('fuelPrice', 'Enter the price per litre.')
+  if (v.fuelPrice && !v.fuelLitres) addCost('fuelLitres', 'Enter the litres.')
+  if (l !== null && l > 0 && p !== null && p > 0 && fuelTotalPaise({ litres: l / 100, pricePerLitrePaise: p }) <= 0) addCost('fuelLitres', 'The fuel total must be at least ₹0.01.')
+  if (v.tollAmount) {
+    const t = parseMoney(v.tollAmount)
+    if (t === null || t < 0) addCost('tollAmount', 'Enter a valid amount with up to 2 decimals.')
+  }
+  if (v.status === 'completed' && tripDistanceHundredths(v.odometerStart, v.odometerEnd, v.distanceKm) <= 0 && !(v.odometerEnd && e === null)) {
+    add('odometerEnd', 'Enter the ending odometer to complete the trip.')
+  }
 })
 export type TripFormValues = z.infer<typeof tripFormSchema>
 export const defaultTripValues = (todayISO = ''): TripFormValues => ({
-  vehicleId: '', driverId: '', customerId: '', fromLocation: '', toLocation: '', distanceKm: '', ratePerKm: '',
-  driverPayment: '', tripDate: todayISO, status: 'planned', notes: '',
+  vehicleId: '', driverId: '', customerId: '', fromLocation: '', toLocation: '', odometerStart: '', odometerEnd: '', distanceKm: '',
+  ratePerKm: '', driverPayment: '', fuelLitres: '', fuelPrice: '', tollAmount: '', tripDate: todayISO, status: 'planned', notes: '',
 })
 export function toTripInput(v: TripFormValues) {
+  const s = parseKmHundredths(v.odometerStart), e = parseKmHundredths(v.odometerEnd)
   return {
     vehicleId: v.vehicleId, driverId: v.driverId, customerId: v.customerId,
     fromLocation: v.fromLocation.trim(), toLocation: v.toLocation.trim(),
-    distanceKm: (parseKmHundredths(v.distanceKm) ?? 0) / 100,
+    distanceKm: tripDistanceHundredths(v.odometerStart, v.odometerEnd, v.distanceKm) / 100,
+    odometerStartKm: s === null ? null : s / 100,
+    odometerEndKm: e === null ? null : e / 100,
     ratePerKmPaise: parseMoney(v.ratePerKm) ?? 0,
     driverPaymentPaise: paiseOrZero(v.driverPayment),
+    // 0 = no fuel / no toll (removes an existing one). The dialog sets these to null for old trips with several entries.
+    fuelLitres: (parseKmHundredths(v.fuelLitres) ?? 0) / 100 as number | null,
+    fuelPricePaise: paiseOrZero(v.fuelPrice) as number | null,
+    tollPaise: paiseOrZero(v.tollAmount) as number | null,
     tripDate: v.tripDate, status: v.status, notes: v.notes.trim() || null,
   }
 }

@@ -84,3 +84,20 @@ export function sumProfitTotals(rows: VehicleProfitTotals[]): Pick<VehicleProfit
     tollPaise: a.tollPaise + r.tollPaise, loanRepaidPaise: a.loanRepaidPaise + r.loanRepaidPaise,
   }), { revenuePaise: 0, driverPaise: 0, fuelPaise: 0, tollPaise: 0, loanRepaidPaise: 0 })
 }
+
+/**
+ * Yearly interest rate (%) that makes `emiPaise` x `months` repay `principalPaise` (reducing-balance EMI formula).
+ * Returns null when it cannot be worked out, 0 when the instalments add up to no more than the amount borrowed.
+ */
+export function loanInterestRate(principalPaise: number, emiPaise: number, months: number): number | null {
+  if (!(principalPaise > 0) || !(emiPaise > 0) || !Number.isInteger(months) || months <= 0) return null
+  if (emiPaise * months <= principalPaise) return 0
+  const emiAt = (r: number) => (r === 0 ? principalPaise / months : (principalPaise * r * (1 + r) ** months) / ((1 + r) ** months - 1))
+  let lo = 0, hi = 1
+  for (let i = 0; i < 80; i++) {
+    const mid = (lo + hi) / 2
+    if (emiAt(mid) < emiPaise) lo = mid; else hi = mid
+  }
+  const yearly = ((lo + hi) / 2) * 12 * 100
+  return Math.round(yearly * 100) / 100
+}

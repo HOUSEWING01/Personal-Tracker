@@ -3,18 +3,14 @@ import { TabBar } from '../../components/ui/TabBar'
 import { useUrlState } from '../../hooks/useUrlState'
 import { CustomersTab } from './CustomersTab'
 import { DriversTab } from './DriversTab'
-import { FuelTab } from './FuelTab'
 import { LoansTab } from './LoansTab'
 import { ProfitTab } from './ProfitTab'
-import { TollsTab } from './TollsTab'
 import { TripsTab } from './TripsTab'
 import { TRANSPORT_URL_DEFAULTS } from './useListControls'
 import { VehiclesTab } from './VehiclesTab'
 
 const TABS = [
   { id: 'trips', label: 'Trips' },
-  { id: 'fuel', label: 'Fuel' },
-  { id: 'tolls', label: 'Tolls' },
   { id: 'loans', label: 'Loans' },
   { id: 'profit', label: 'Profit' },
   { id: 'vehicles', label: 'Vehicles' },
@@ -35,8 +31,6 @@ export function TransportPage() {
       <TabBar tabs={TABS} current={tab} onSelect={selectTab} label="Transport sections" idPrefix="tr-tab-" panelId="tr-panel" />
       <div role="tabpanel" id="tr-panel" tabIndex={0} aria-labelledby={`tr-tab-${tab}`}>
         {tab === 'trips' && <TripsTab />}
-        {tab === 'fuel' && <FuelTab />}
-        {tab === 'tolls' && <TollsTab />}
         {tab === 'loans' && <LoansTab />}
         {tab === 'profit' && <ProfitTab />}
         {tab === 'vehicles' && <VehiclesTab />}

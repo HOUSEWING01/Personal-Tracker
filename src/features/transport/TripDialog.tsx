@@ -7,32 +7,38 @@ import { todayIST } from '../../lib/dates'
 import { formatINR } from '../../lib/money'
 import { TRIP_STATUSES, type Trip } from '../../types/transport'
 import { parseMoney } from '../property/propertyForms'
-import { useSaveTrip, useTripOptions } from './hooks'
+import { useSaveTrip, useTripCosts, useTripOptions } from './hooks'
 import { TRIP_STATUS_LABELS } from './labels'
 import { transportSubmitError } from './submitError'
-import { tripOperatingProfitPaise, tripRevenuePaise } from './transportEngine'
-import { defaultTripValues, parseKmHundredths, toTripInput, tripFormSchema, type TripFormValues } from './transportForms'
+import { fuelTotalPaise, tripOperatingProfitPaise, tripRevenuePaise } from './transportEngine'
+import { defaultTripValues, toTripInput, tripDistanceHundredths, tripFormSchema, type TripFormValues } from './transportForms'
+import { parseKmHundredths } from './transportForms'
+import type { TripCosts } from '../../services/transportService'
 import { FormSelect } from '../../components/forms/Select'
 import { FormDatePicker } from '../../components/forms/DatePicker'
 
-function initial(t?: Trip): TripFormValues {
+function initial(t?: Trip, c?: TripCosts): TripFormValues {
   if (!t) return defaultTripValues(todayIST())
   return {
     vehicleId: t.vehicleId, driverId: t.driverId, customerId: t.customerId,
-    fromLocation: t.fromLocation, toLocation: t.toLocation, distanceKm: String(t.distanceKm),
+    fromLocation: t.fromLocation, toLocation: t.toLocation,
+    odometerStart: t.odometerStartKm === null ? '' : String(t.odometerStartKm), odometerEnd: t.odometerEndKm === null ? '' : String(t.odometerEndKm),
+    distanceKm: t.odometerStartKm === null ? String(t.distanceKm) : '',
     ratePerKm: (t.ratePerKmPaise / 100).toFixed(2),
     driverPayment: t.driverPaymentPaise ? (t.driverPaymentPaise / 100).toFixed(2) : '',
+    fuelLitres: c && c.fuelCount === 1 ? String(c.fuelLitres) : '',
+    fuelPrice: c && c.fuelCount === 1 ? (c.fuelPricePaise / 100).toFixed(2) : '',
+    tollAmount: c && c.tollCount === 1 ? (c.tollPaise / 100).toFixed(2) : '',
     tripDate: t.tripDate, status: t.status, notes: t.notes ?? '',
   }
 }
 
 /** Live preview while typing; blank or invalid parts count as zero here (the schema reports the error). */
-function livePreview(distance: string, rate: string, driver: string, fuelPaise: number, tollPaise: number) {
-  const km = parseKmHundredths(distance)
+function livePreview(km: number, rate: string, driver: string, fuelPaise: number, tollPaise: number) {
   const ratePaise = parseMoney(rate)
   const driverPaise = driver.trim() === '' ? 0 : parseMoney(driver)
   const parts = {
-    distanceKm: km !== null ? km / 100 : 0,
+    distanceKm: km / 100,
     ratePerKmPaise: ratePaise !== null && ratePaise > 0 ? ratePaise : 0,
     driverPaymentPaise: driverPaise !== null && driverPaise > 0 ? driverPaise : 0,
   }
@@ -42,34 +48,51 @@ function livePreview(distance: string, rate: string, driver: string, fuelPaise: 
 function Form({ trip, onClose, onSaved }: { trip?: Trip; onClose: () => void; onSaved: () => void }) {
   const save = useSaveTrip(trip?.id)
   const options = useTripOptions()
+  const costs = useTripCosts(trip?.id)
   const { register, handleSubmit, control, watch, formState: { errors } } = useForm<TripFormValues>({
-    resolver: zodResolver(tripFormSchema), defaultValues: initial(trip),
+    resolver: zodResolver(tripFormSchema), defaultValues: initial(trip, costs.data),
   })
-  const [distance, rate, driverPay, status] = watch(['distanceKm', 'ratePerKm', 'driverPayment', 'status'])
-  const { revenue, profit } = livePreview(distance, rate, driverPay, trip?.fuelPaise ?? 0, trip?.tollPaise ?? 0)
+  const [odoStart, odoEnd, manualKm, rate, driverPay, status, fuelL, fuelP, toll] = watch(['odometerStart', 'odometerEnd', 'distanceKm', 'ratePerKm', 'driverPayment', 'status', 'fuelLitres', 'fuelPrice', 'tollAmount'])
+  // Old trips that already hold several fuel or toll entries keep them as they are; only 0 or 1 entry is edited here.
+  const fuelManaged = !costs.data || costs.data.fuelCount <= 1
+  const tollManaged = !costs.data || costs.data.tollCount <= 1
+  const litresH = parseKmHundredths(fuelL), priceP = parseMoney(fuelP)
+  const fuelNow = litresH !== null && priceP !== null ? fuelTotalPaise({ litres: litresH / 100, pricePerLitrePaise: priceP }) : 0
+  const tollNow = toll.trim() === '' ? 0 : (parseMoney(toll) ?? 0)
+  // Distance = ending odometer - starting odometer. Only old trips saved without readings keep a typed distance.
+  const manualDistance = trip !== undefined && trip.odometerStartKm === null
+  const km = tripDistanceHundredths(odoStart, odoEnd, manualKm)
+  const { revenue, profit } = livePreview(km, rate, driverPay, fuelManaged ? fuelNow : (trip?.fuelPaise ?? 0), tollManaged ? tollNow : (trip?.tollPaise ?? 0))
 
   // New trips list active vehicles/drivers only; an old trip keeps showing its own vehicle/driver even if now inactive.
-  const vehicles = (options.data?.vehicles ?? []).filter((v) => v.status === 'active' || v.id === trip?.vehicleId)
+  // A vehicle with a trip still in progress cannot start another: complete or cancel that trip first.
+  const busy = new Set((options.data?.inProgress ?? []).filter((t) => t.tripId !== trip?.id).map((t) => t.vehicleId))
+  const activeVehicles = (options.data?.vehicles ?? []).filter((v) => v.status === 'active' || v.id === trip?.vehicleId)
+  const vehicles = activeVehicles.filter((v) => !busy.has(v.id) || v.id === trip?.vehicleId)
   const drivers = (options.data?.drivers ?? []).filter((d) => d.status === 'active' || d.id === trip?.driverId)
   const customers = options.data?.customers ?? []
 
   const onSubmit = handleSubmit(async (values) => {
     if (save.isPending) return
-    try { await save.mutateAsync(toTripInput(values)); onSaved() } catch { /* shown via save.isError */ }
+    const input = toTripInput(values)
+    if (!fuelManaged) { input.fuelLitres = null; input.fuelPricePaise = null }
+    if (!tollManaged) input.tollPaise = null
+    try { await save.mutateAsync(input); onSaved() } catch { /* shown via save.isError */ }
   })
 
-  if (options.isError) {
+  if (options.isError || costs.isError) {
     return (
       <div role="alert" className="py-6 text-center">
         <p className="text-sm font-medium">Could not load vehicles, drivers and customers</p>
         <p className="mt-1 text-sm text-muted">Check your connection and try again.</p>
-        <button type="button" className={`${buttonPrimary} mt-4`} onClick={() => void options.refetch()}>Try again</button>
+        <button type="button" className={`${buttonPrimary} mt-4`} onClick={() => { void options.refetch(); void costs.refetch() }}>Try again</button>
       </div>
     )
   }
-  if (options.isLoading) return <p className="py-10 text-center text-sm text-muted" role="status">Loading…</p>
+  if (options.isLoading || (trip && costs.isLoading)) return <p className="py-10 text-center text-sm text-muted" role="status">Loading…</p>
 
-  const missing = vehicles.length === 0 ? 'Add an active vehicle first (Transport → Vehicles).'
+  const missing = activeVehicles.length === 0 ? 'Add an active vehicle first (Transport → Vehicles).'
+    : vehicles.length === 0 ? 'Every vehicle has a trip in progress. Complete or cancel one of those trips first.'
     : drivers.length === 0 ? 'Add an active driver first (Transport → Drivers).'
     : customers.length === 0 ? 'Add a customer first (Transport → Customers).' : null
   if (missing && !trip) {
@@ -107,9 +130,21 @@ function Form({ trip, onClose, onSaved }: { trip?: Trip; onClose: () => void; on
       <FormField id="tr-to" label="To" error={errors.toLocation?.message}>
         <input {...register('toLocation')} {...fieldA11y('tr-to', errors.toLocation?.message)} autoComplete="off" className={inputClass} />
       </FormField>
-      <FormField id="tr-km" label="Distance (KM)" error={errors.distanceKm?.message}>
-        <input {...register('distanceKm')} {...fieldA11y('tr-km', errors.distanceKm?.message)} inputMode="decimal" autoComplete="off" placeholder="0" className={inputClass} />
+      <FormField id="tr-odo-start" label="Odometer start (KM)" error={errors.odometerStart?.message}>
+        <input {...register('odometerStart')} {...fieldA11y('tr-odo-start', errors.odometerStart?.message)} inputMode="decimal" autoComplete="off" placeholder="0" className={inputClass} />
       </FormField>
+      <FormField id="tr-odo-end" label="Odometer end (KM)" error={errors.odometerEnd?.message} hint="Add when the vehicle reaches the destination.">
+        <input {...register('odometerEnd')} {...fieldA11y('tr-odo-end', errors.odometerEnd?.message, true)} inputMode="decimal" autoComplete="off" placeholder="0" className={inputClass} />
+      </FormField>
+      {manualDistance ? (
+        <FormField id="tr-km" label="Distance (KM)" error={errors.distanceKm?.message} hint="Old trip without odometer readings.">
+          <input {...register('distanceKm')} {...fieldA11y('tr-km', errors.distanceKm?.message, true)} inputMode="decimal" autoComplete="off" placeholder="0" className={inputClass} />
+        </FormField>
+      ) : (
+        <FormField id="tr-km" label="Distance (KM)" hint="End − start odometer.">
+          <input id="tr-km" readOnly tabIndex={-1} value={km > 0 ? (km / 100).toString() : '—'} aria-describedby="tr-km-hint" className={`${inputClass} bg-canvas`} />
+        </FormField>
+      )}
       <FormField id="tr-rate" label="Rate per KM (₹)" error={errors.ratePerKm?.message}>
         <input {...register('ratePerKm')} {...fieldA11y('tr-rate', errors.ratePerKm?.message)} inputMode="decimal" autoComplete="off" placeholder="0.00" className={inputClass} />
       </FormField>
@@ -119,13 +154,32 @@ function Form({ trip, onClose, onSaved }: { trip?: Trip; onClose: () => void; on
       <FormField id="tr-date" label="Trip date" error={errors.tripDate?.message}>
         <FormDatePicker control={control} name="tripDate" {...fieldA11y('tr-date', errors.tripDate?.message)} className={inputClass} />
       </FormField>
+      {fuelManaged ? (
+        <>
+          <FormField id="tr-fuel-l" label="Fuel litres (optional)" error={errors.fuelLitres?.message}>
+            <input {...register('fuelLitres')} {...fieldA11y('tr-fuel-l', errors.fuelLitres?.message)} inputMode="decimal" autoComplete="off" placeholder="0" className={inputClass} />
+          </FormField>
+          <FormField id="tr-fuel-p" label="Price per litre (₹)" error={errors.fuelPrice?.message}>
+            <input {...register('fuelPrice')} {...fieldA11y('tr-fuel-p', errors.fuelPrice?.message)} inputMode="decimal" autoComplete="off" placeholder="0.00" className={inputClass} />
+          </FormField>
+        </>
+      ) : (
+        <p className="col-span-2 text-xs text-muted">This trip has several earlier fuel entries ({formatINR(trip?.fuelPaise ?? 0)} in total). They stay as they are.</p>
+      )}
+      {tollManaged ? (
+        <FormField id="tr-toll" label="Toll (₹, optional)" error={errors.tollAmount?.message} hint={fuelManaged && fuelNow > 0 ? `Fuel total ${formatINR(fuelNow)}` : undefined}>
+          <input {...register('tollAmount')} {...fieldA11y('tr-toll', errors.tollAmount?.message, fuelManaged && fuelNow > 0)} inputMode="decimal" autoComplete="off" placeholder="0.00" className={inputClass} />
+        </FormField>
+      ) : (
+        <p className="col-span-2 text-xs text-muted">This trip has several earlier toll entries ({formatINR(trip?.tollPaise ?? 0)} in total). They stay as they are.</p>
+      )}
+      <p className="col-span-2 -mt-2 text-xs text-muted">Fuel and toll can be added after the vehicle reaches the destination. Saving also adds them as expenses in Finance.</p>
       <div className="rounded-md bg-canvas px-3 py-2 text-sm col-span-2" aria-live="polite">
         <div><span className="text-muted">Revenue (distance × rate): </span><span className="font-medium tabular-nums">{formatINR(revenue)}</span></div>
         <div>
           <span className="text-muted">Operating profit (after driver payment, fuel and toll): </span>
           <span className="font-medium tabular-nums">{profit < 0 ? '−' : ''}{formatINR(Math.abs(profit))}</span>
         </div>
-        {trip && <div className="text-xs text-muted">Fuel on this trip {formatINR(trip.fuelPaise)}, tolls {formatINR(trip.tollPaise)} (add them in the Fuel and Tolls tabs).</div>}
         <p className="mt-1 text-xs text-muted">
           {status === 'completed'
             ? 'Saving records the revenue as income and the driver payment as an expense in Finance. Editing the trip later updates those entries.'

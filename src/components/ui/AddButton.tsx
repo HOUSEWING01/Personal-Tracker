@@ -1,5 +1,4 @@
 import { Plus } from '@phosphor-icons/react'
-import { buttonPrimary } from './FullScreenMessage'
 
 /**
  * The one "Add X" action of a screen. A normal button from sm up; on phones a floating "+" in the corner, so it costs no
@@ -8,7 +7,7 @@ import { buttonPrimary } from './FullScreenMessage'
 export function AddButton({ label, onClick }: { label: string; onClick: () => void }) {
   return (
     <>
-      <button type="button" className={`${buttonPrimary} hidden gap-1.5 sm:inline-flex`} onClick={onClick}>
+      <button type="button" className="hidden min-h-11 items-center justify-center gap-1.5 rounded-md bg-primary px-4 py-2 text-sm font-medium text-white hover:bg-primary-hover sm:inline-flex md:min-h-0" onClick={onClick}>
         <Plus size={16} aria-hidden /> {label}
       </button>
       <button

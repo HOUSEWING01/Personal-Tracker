@@ -110,6 +110,7 @@ export async function updateCustomer(id: string, c: CustomerInput): Promise<void
 interface TripRow {
   id: string; vehicle_id: string; driver_id: string; customer_id: string
   from_location: string; to_location: string; distance_km: Num; rate_per_km: Num; driver_payment: Num
+  odometer_start: Num | null; odometer_end: Num | null
   trip_date: string; status: TripStatus; notes: string | null
   vehicles: { name: string; registration_number: string } | null
   drivers: { name: string } | null
@@ -121,6 +122,8 @@ const toTrip = (r: TripRow, cost?: { fuel_total: Num; toll_total: Num }): Trip =
   id: r.id, vehicleId: r.vehicle_id, vehicleName: r.vehicles?.name ?? '', vehicleRegistration: r.vehicles?.registration_number ?? '',
   driverId: r.driver_id, driverName: r.drivers?.name ?? '', customerId: r.customer_id, customerName: r.customers?.name ?? '',
   fromLocation: r.from_location, toLocation: r.to_location, distanceKm: Number(r.distance_km),
+  odometerStartKm: r.odometer_start === null ? null : Number(r.odometer_start),
+  odometerEndKm: r.odometer_end === null ? null : Number(r.odometer_end),
   ratePerKmPaise: toPaise(r.rate_per_km), driverPaymentPaise: toPaise(r.driver_payment),
   fuelPaise: cost ? toPaise(cost.fuel_total) : 0, tollPaise: cost ? toPaise(cost.toll_total) : 0,
   tripDate: r.trip_date, status: r.status, notes: r.notes,
@@ -151,6 +154,9 @@ export async function listTrips(f: TripFilters, o: PageOpts): Promise<Paged<Trip
 export interface TripInput {
   vehicleId: string; driverId: string; customerId: string
   fromLocation: string; toLocation: string; distanceKm: number; ratePerKmPaise: number
+  odometerStartKm: number | null; odometerEndKm: number | null
+  /** Fuel and toll of the trip. null = leave as it is; 0 = none. */
+  fuelLitres: number | null; fuelPricePaise: number | null; tollPaise: number | null
   driverPaymentPaise: number; tripDate: string; status: TripStatus; notes: string | null
 }
 /**
@@ -163,9 +169,32 @@ export async function saveTrip(id: string | undefined, t: TripInput): Promise<st
     p_from_location: t.fromLocation, p_to_location: t.toLocation, p_distance_km: t.distanceKm,
     p_rate_per_km: fromPaise(t.ratePerKmPaise), p_driver_payment: fromPaise(t.driverPaymentPaise),
     p_trip_date: t.tripDate, p_status: t.status, p_notes: t.notes, p_id: id ?? null,
+    p_odometer_start: t.odometerStartKm, p_odometer_end: t.odometerEndKm,
+    p_fuel_litres: t.fuelLitres, p_fuel_price: t.fuelPricePaise === null ? null : fromPaise(t.fuelPricePaise),
+    p_toll_amount: t.tollPaise === null ? null : fromPaise(t.tollPaise),
   })
   if (error) throw error
   return data as string
+}
+
+/** The fuel and toll already saved on a trip, to fill the trip form. More than one entry (old data) is left untouched by the form. */
+export interface TripCosts {
+  fuelCount: number; fuelLitres: number; fuelPricePaise: number
+  tollCount: number; tollPaise: number
+}
+export async function getTripCosts(tripId: string): Promise<TripCosts> {
+  const [f, t] = await Promise.all([
+    supabase.from('fuel_logs').select('litres, price_per_litre').eq('trip_id', tripId),
+    supabase.from('tolls').select('amount').eq('trip_id', tripId),
+  ])
+  if (f.error) throw f.error
+  if (t.error) throw t.error
+  const fuel = f.data as { litres: Num; price_per_litre: Num }[]
+  const tolls = t.data as { amount: Num }[]
+  return {
+    fuelCount: fuel.length, fuelLitres: fuel.length === 1 ? Number(fuel[0].litres) : 0, fuelPricePaise: fuel.length === 1 ? toPaise(fuel[0].price_per_litre) : 0,
+    tollCount: tolls.length, tollPaise: tolls.length === 1 ? toPaise(tolls[0].amount) : 0,
+  }
 }
 
 // ---------- pickers for the trip form ----------
@@ -173,22 +202,27 @@ export interface TripOptions {
   vehicles: { id: string; name: string; registrationNumber: string; status: VehicleStatus }[]
   drivers: { id: string; name: string; status: DriverStatus }[]
   customers: { id: string; name: string; mobile: string | null }[]
+  /** Trips still in progress (planned). A vehicle on one of these cannot start another trip. */
+  inProgress: { tripId: string; vehicleId: string }[]
 }
 /** Vehicles, drivers and customers for the trip form's pickers (the form shows only active vehicles/drivers). */
 export async function listTripOptions(): Promise<TripOptions> {
-  const [v, d, c] = await Promise.all([
+  const [v, d, c, ip] = await Promise.all([
     supabase.from('vehicles').select('id, name, registration_number, status').order('name').limit(1000),
     supabase.from('drivers').select('id, name, status').order('name').limit(1000),
     supabase.from('customers').select('id, name, mobile').order('name').limit(2000),
+    supabase.from('trips').select('id, vehicle_id').eq('status', 'planned').limit(2000),
   ])
   if (v.error) throw v.error
   if (d.error) throw d.error
   if (c.error) throw c.error
+  if (ip.error) throw ip.error
   return {
     vehicles: (v.data as { id: string; name: string; registration_number: string; status: VehicleStatus }[])
       .map((r) => ({ id: r.id, name: r.name, registrationNumber: r.registration_number, status: r.status })),
     drivers: d.data as TripOptions['drivers'],
     customers: c.data as TripOptions['customers'],
+    inProgress: (ip.data as { id: string; vehicle_id: string }[]).map((t) => ({ tripId: t.id, vehicleId: t.vehicle_id })),
   }
 }
 

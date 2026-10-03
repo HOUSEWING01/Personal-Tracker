@@ -50,6 +50,9 @@ export interface Trip {
   fromLocation: string
   toLocation: string
   distanceKm: number
+  /** Odometer readings; distance = end - start. Old trips have none. The end reading is added when the trip reaches its destination. */
+  odometerStartKm: number | null
+  odometerEndKm: number | null
   ratePerKmPaise: Paise
   driverPaymentPaise: Paise
   /** Fuel linked to this trip and tolls on this trip (raw sums from `trip_cost_totals`). */

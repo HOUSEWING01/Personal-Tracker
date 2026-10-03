@@ -1,6 +1,6 @@
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import {
-  createCustomer, createDriver, listCustomers, listDrivers, listFuelLogs, listLoanPayments, listLoans, listTolls, listVehicleProfitTotals, listTripChoices, listTripOptions, listTrips, listVehicles,
+  createCustomer, createDriver, getTripCosts, listCustomers, listDrivers, listFuelLogs, listLoanPayments, listLoans, listTolls, listVehicleProfitTotals, listTripChoices, listTripOptions, listTrips, listVehicles,
   saveFuelLog, saveLoanPayment, saveToll, saveTrip, saveVehicle, saveVehicleLoan,
   updateCustomer, updateDriver,
   type CustomerInput, type DriverFilters, type DriverInput, type FuelFilters, type FuelInput, type LoanFilters, type LoanInput, type LoanPaymentInput, type TollFilters, type TollInput,
@@ -18,6 +18,7 @@ export const useCustomers = (f: { q?: string }, page: number) =>
 
 export const useTrips = (f: TripFilters, page: number) =>
   useQuery({ queryKey: ['trips', f, page], queryFn: () => listTrips(f, { page, pageSize: TRANSPORT_PAGE_SIZE }), placeholderData: keepPreviousData })
+export const useTripCosts = (tripId?: string) => useQuery({ queryKey: ['trip-costs', tripId], queryFn: () => getTripCosts(tripId as string), enabled: Boolean(tripId) })
 export const useTripOptions = () => useQuery({ queryKey: ['trip-options'], queryFn: listTripOptions })
 
 export const useFuelLogs = (f: FuelFilters, page: number) =>
@@ -54,6 +55,8 @@ export function useSaveTrip(id?: string) {
     // A completed trip also writes ledger entries, so refresh the finance screens too.
     onSuccess: () => Promise.all([
       qc.invalidateQueries({ queryKey: ['trips'] }),
+      qc.invalidateQueries({ queryKey: ['trip-options'] }),
+      qc.invalidateQueries({ queryKey: ['trip-costs'] }),
       qc.invalidateQueries({ queryKey: ['trip-choices'] }),
       qc.invalidateQueries({ queryKey: ['fuel-logs'] }),
       qc.invalidateQueries({ queryKey: ['tolls'] }),

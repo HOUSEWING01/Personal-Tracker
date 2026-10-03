@@ -17,7 +17,9 @@ const columns: Column<Trip>[] = [
     cell: (t) => (<><span className="font-medium">{t.fromLocation} → {t.toLocation}</span><div className="text-xs font-normal text-muted">{formatDate(t.tripDate)} · {t.vehicleName} ({t.vehicleRegistration})</div></>),
   },
   { header: 'Customer', cell: (t) => (<>{t.customerName}<div className="text-xs text-muted">Driver: {t.driverName}</div></>) },
-  { header: 'Distance', align: 'right', cell: (t) => `${t.distanceKm} km × ${formatINR(t.ratePerKmPaise)}` },
+  { header: 'Distance', align: 'right', cell: (t) => t.distanceKm > 0
+    ? <>{t.distanceKm} km × {formatINR(t.ratePerKmPaise)}{t.odometerStartKm !== null && t.odometerEndKm !== null && <div className="text-xs font-normal text-muted">Odometer {t.odometerStartKm} → {t.odometerEndKm}</div>}</>
+    : <span className="text-muted">Waiting for end odometer</span> },
   { header: 'Revenue', align: 'right', cell: (t) => <span className="font-medium">{formatINR(tripRevenuePaise(t))}</span> },
   { header: 'Driver payment', align: 'right', cell: (t) => formatINR(t.driverPaymentPaise) },
   { header: 'Fuel', align: 'right', cell: (t) => formatINR(t.fuelPaise) },

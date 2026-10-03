@@ -1,9 +1,12 @@
+import { useEffect, useRef } from 'react'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useForm } from 'react-hook-form'
 import { Dialog, DialogActions } from '../../components/ui/Dialog'
 import { FormField, fieldA11y, inputClass } from '../../components/forms/FormField'
 import { buttonPrimary, buttonSecondary } from '../../components/ui/FullScreenMessage'
 import { todayIST } from '../../lib/dates'
+import { parseMoney } from '../property/propertyForms'
+import { loanInterestRate } from './transportEngine'
 import { LOAN_STATUSES, type VehicleLoan } from '../../types/transport'
 import { useSaveLoan, useTripOptions } from './hooks'
 import { LOAN_STATUS_LABELS } from './labels'
@@ -24,9 +27,19 @@ function initial(l?: VehicleLoan): LoanFormValues {
 function Form({ loan, onClose, onSaved }: { loan?: VehicleLoan; onClose: () => void; onSaved: () => void }) {
   const save = useSaveLoan(loan?.id)
   const options = useTripOptions()
-  const { register, handleSubmit, control, formState: { errors } } = useForm<LoanFormValues>({
+  const { register, handleSubmit, control, watch, setValue, formState: { errors, isSubmitted } } = useForm<LoanFormValues>({
     resolver: zodResolver(loanFormSchema), defaultValues: initial(loan),
   })
+
+  // The interest rate follows the amount, EMI and tenure: change any of them and the rate is worked out again.
+  const [principal, emi, tenure] = watch(['principal', 'emi', 'tenureMonths'])
+  const first = useRef(true)
+  const tenureN = /^\d{1,4}$/.test(tenure.trim()) ? Number(tenure.trim()) : 0
+  const rate = loanInterestRate(parseMoney(principal) ?? 0, parseMoney(emi) ?? 0, tenureN)
+  useEffect(() => {
+    if (first.current) { first.current = false; return }
+    if (rate !== null) setValue('interestRate', String(rate), { shouldValidate: isSubmitted })
+  }, [rate, setValue, isSubmitted])
 
   const onSubmit = handleSubmit(async (values) => {
     if (save.isPending) return
@@ -50,14 +63,14 @@ function Form({ loan, onClose, onSaved }: { loan?: VehicleLoan; onClose: () => v
       <FormField id="ln-start" label="Start date" error={errors.startDate?.message}>
         <FormDatePicker control={control} name="startDate" {...fieldA11y('ln-start', errors.startDate?.message)} className={inputClass} />
       </FormField>
-      <FormField id="ln-rate" label="Interest rate (% per year)" error={errors.interestRate?.message} hint="For reference only. Nothing is calculated from it.">
+      <FormField id="ln-rate" label="Interest rate (% per year)" error={errors.interestRate?.message} hint={rate !== null ? 'Worked out from the amount, EMI and tenure.' : 'Fills in once amount, EMI and tenure are entered.'}>
         <input {...register('interestRate')} {...fieldA11y('ln-rate', errors.interestRate?.message, true)} inputMode="decimal" autoComplete="off" placeholder="0" className={inputClass} />
       </FormField>
       <FormField id="ln-emi" label="Monthly instalment, EMI (₹)" error={errors.emi?.message}>
         <input {...register('emi')} {...fieldA11y('ln-emi', errors.emi?.message)} inputMode="decimal" autoComplete="off" placeholder="0.00" className={inputClass} />
       </FormField>
-      <FormField id="ln-tenure" label="Tenure in months (optional)" error={errors.tenureMonths?.message}>
-        <input {...register('tenureMonths')} {...fieldA11y('ln-tenure', errors.tenureMonths?.message)} inputMode="numeric" autoComplete="off" className={inputClass} />
+      <FormField id="ln-tenure" label="Tenure in months (optional)" error={errors.tenureMonths?.message} hint="Fills in the interest rate.">
+        <input {...register('tenureMonths')} {...fieldA11y('ln-tenure', errors.tenureMonths?.message, true)} inputMode="numeric" autoComplete="off" className={inputClass} />
       </FormField>
       <FormField id="ln-status" label="Status" error={errors.status?.message}>
         <FormSelect control={control} name="status" {...fieldA11y('ln-status', errors.status?.message)} className={inputClass}>

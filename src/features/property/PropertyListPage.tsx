@@ -4,20 +4,19 @@ import { PageHeader } from '../../components/ui/PageHeader'
 import { EmptyState } from '../../components/ui/EmptyState'
 import { buttonPrimary, buttonSecondary } from '../../components/ui/FullScreenMessage'
 import { AddButton } from '../../components/ui/AddButton'
-import { ListToolbar, filterField, filterLabel } from '../../components/ui/ListToolbar'
+import { MagnifyingGlass } from '@phosphor-icons/react'
 import { Pagination } from '../../components/ui/Pagination'
 import { useUrlState } from '../../hooks/useUrlState'
 import { todayIST } from '../../lib/dates'
 import { formatINR } from '../../lib/money'
-import type { PropertyOverview, PropertyStatus } from '../../types/property'
+import type { PropertyOverview } from '../../types/property'
 import { PROPERTY_PAGE_SIZE, useProperties, useRentSync } from './hooks'
 import { isOccupied, propertyTotals } from './propertyEngine'
 import { Pill } from './StatusBadge'
 import { toast } from '../../lib/toast'
 import { GodownDialog } from './GodownDialog'
-import { Select } from '../../components/forms/Select'
 
-const DEFAULTS = { q: '', status: 'all', page: '1' }
+const DEFAULTS = { q: '', due: 'all', page: '1' }
 
 function Occupancy({ p, today }: { p: PropertyOverview; today: string }) {
   if (p.status === 'inactive') return <Pill>Inactive</Pill>
@@ -32,7 +31,7 @@ export function PropertyListPage() {
   const { search } = useLocation()
   const today = todayIST()
 
-  const status: PropertyStatus | undefined = p.status === 'active' || p.status === 'inactive' ? p.status : undefined
+  const due = p.due === 'due' ? true : undefined
   const page = Math.max(1, Number.parseInt(p.page, 10) || 1)
 
   useEffect(() => {
@@ -41,15 +40,17 @@ export function PropertyListPage() {
   }, [qText, p.q, update])
 
   const sync = useRentSync()
-  const list = useProperties({ status, q: p.q }, page, sync.isSuccess)
-  const total = list.data?.total ?? 0
+  // "Due" is worked out here (rent outstanding > 0), so it loads the whole list and filters it on screen.
+  const list = useProperties({ q: p.q }, due ? 1 : page, sync.isSuccess, due ? 500 : PROPERTY_PAGE_SIZE)
+  const shown = due ? (list.data?.rows ?? []).filter((r) => propertyTotals(r).outstandingPaise > 0) : (list.data?.rows ?? [])
+  const total = due ? shown.length : (list.data?.total ?? 0)
   const totalPages = Math.max(1, Math.ceil(total / PROPERTY_PAGE_SIZE))
   useEffect(() => {
     if (list.data && page > totalPages) update({ page: String(totalPages) })
   }, [list.data, page, totalPages, update])
 
-  const filtered = Boolean(status || p.q)
-  const rows = list.data?.rows ?? []
+  const filtered = Boolean(p.q || due)
+  const rows = shown
   const failed = sync.isError || list.isError
   const retry = () => { if (sync.isError) void sync.refetch(); else void list.refetch() }
 
@@ -61,18 +62,22 @@ export function PropertyListPage() {
       />
       {adding && <GodownDialog open mode="add" onClose={() => setAdding(false)} onSaved={(id) => { setAdding(false); toast.success('Godown added'); navigate(`/property/${id}`, { state: { listSearch: search } }) }} />}
 
-      <ListToolbar
-        searchLabel="Search by tenant name" searchValue={qText} onSearch={setQText}
-        activeCount={(status ? 1 : 0) + (p.q ? 1 : 0)} onClear={() => { setQText(''); update({ q: '', status: 'all' }) }}
-      >
-        <label className={`${filterLabel} col-span-2 md:col-span-1`}>Status
-          <Select value={status ?? 'all'} onChange={(v) => update({ status: v })} className={filterField}>
-            <option value="all">All</option>
-            <option value="active">Active</option>
-            <option value="inactive">Inactive</option>
-          </Select>
-        </label>
-      </ListToolbar>
+      <div role="search" className="rounded-lg border border-line bg-surface p-3 md:p-4">
+        <div className="flex items-center gap-2">
+          <div className="relative min-w-0 flex-1">
+            <MagnifyingGlass size={16} aria-hidden className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted" />
+            <input
+              type="search" value={qText} onChange={(e) => setQText(e.target.value)}
+              aria-label="Search by tenant name" placeholder="Search by tenant name" autoComplete="off" enterKeyHint="search"
+              className="w-full rounded-md border border-line bg-surface py-2.5 pl-9 pr-3 text-sm md:py-2"
+            />
+          </div>
+          <button
+            type="button" aria-pressed={due === true} onClick={() => update({ due: due ? 'all' : 'due', page: '1' })}
+            className={`shrink-0 rounded-full border px-4 py-2.5 text-sm font-medium md:py-2 ${due ? 'border-primary bg-primary text-white' : 'border-line bg-surface text-primary hover:bg-sage-soft'}`}
+          >Due</button>
+        </div>
+      </div>
 
       <div className="mt-4">
         {failed ? (
@@ -90,7 +95,7 @@ export function PropertyListPage() {
             title={filtered ? 'No godowns match these filters' : 'No godowns yet'}
             description={filtered ? 'Clear a filter or change the search.' : 'Add a godown with its tenant, rent and advance. Monthly rent is created for you.'}
             action={filtered
-              ? <button type="button" className={buttonSecondary} onClick={() => { setQText(''); update({ q: '', status: 'all' }) }}>Clear filters</button>
+              ? <button type="button" className={buttonSecondary} onClick={() => { setQText(''); update({ q: '', due: 'all' }) }}>Clear filters</button>
               : <button type="button" className={buttonPrimary} onClick={() => setAdding(true)}>Add godown</button>}
           />
         ) : (
@@ -144,7 +149,7 @@ export function PropertyListPage() {
                 )
               })}
             </ul>
-            <Pagination page={page} pageSize={PROPERTY_PAGE_SIZE} total={total} onPage={(n) => update({ page: String(n) })} noun="godowns" />
+            {!due && <Pagination page={page} pageSize={PROPERTY_PAGE_SIZE} total={total} onPage={(n) => update({ page: String(n) })} noun="godowns" />}
           </>
         )}
       </div>
