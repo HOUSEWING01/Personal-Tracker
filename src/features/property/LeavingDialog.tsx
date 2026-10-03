@@ -24,20 +24,20 @@ function Form({ propertyId, tenant, advancePaise, outstandingPaise, onClose, onS
     try { await save.mutateAsync(toLeavingInput(values)); onSaved() } catch { /* shown via save.isError */ }
   })
   return (
-    <form onSubmit={onSubmit} noValidate className="grid grid-cols-1 gap-4 md:grid-cols-2">
-      <p className="text-sm text-muted md:col-span-2">
+    <form onSubmit={onSubmit} noValidate className="grid grid-cols-2 gap-x-3 gap-y-4 md:gap-4">
+      <p className="text-sm text-muted col-span-2">
         Advance held: <strong className="text-ink">{formatINR(advancePaise)}</strong>
         {outstandingPaise > 0 && <> · Rent still unpaid: <strong className="text-ink">{formatINR(outstandingPaise)}</strong></>}
       </p>
-      <FormField id="lv-date" label="Leaving date" error={errors.leaveDate?.message} hint="Rent is charged up to this month.">
+      <FormField id="lv-date" label="Leaving date" error={errors.leaveDate?.message} hint="The month they leave in is billed in full.">
         <FormDatePicker control={control} name="leaveDate" {...fieldA11y('lv-date', errors.leaveDate?.message, true)} data-autofocus className={inputClass} />
       </FormField>
       <FormField id="lv-return" label="Advance returned (₹)" error={errors.returnAmount?.message}
         hint={advancePaise > 0 ? 'Lower it if you keep part of the advance.' : 'No advance is held.'}>
         <input {...register('returnAmount')} {...fieldA11y('lv-return', errors.returnAmount?.message, true)} inputMode="decimal" autoComplete="off" placeholder="0.00" disabled={advancePaise === 0} className={inputClass} />
       </FormField>
-      <p className="text-xs text-muted md:col-span-2">The returned advance is added to Finance → Transactions as money paid out. It never counts as an expense or lowers profit.</p>
-      {save.isError && <p role="alert" className="rounded-md bg-danger-soft px-3 py-2 text-sm text-danger md:col-span-2">{submitError(save.error, 'tenant')} Press Save again to retry. Anything already saved is not repeated.</p>}
+      <p className="text-xs text-muted col-span-2">The returned advance is added to Finance → Transactions as money paid out. It never counts as an expense or lowers profit.</p>
+      {save.isError && <p role="alert" className="rounded-md bg-danger-soft px-3 py-2 text-sm text-danger col-span-2">{submitError(save.error, 'tenant')} Press Save again to retry. Anything already saved is not repeated.</p>}
       <DialogActions>
         <button type="button" className={buttonSecondary} onClick={onClose}>Cancel</button>
         <button type="submit" className={buttonPrimary} disabled={save.isPending}>{save.isPending ? 'Saving…' : 'Tenant has left'}</button>

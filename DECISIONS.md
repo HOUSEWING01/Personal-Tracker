@@ -331,3 +331,20 @@ No migration. Tables, views, RPCs, the ledger postings (D-029) and the `/propert
 ### Trade-offs
 Renaming the tenant renames the godown. Two tenants cannot share one godown record.
 
+## D-033 Rent is billed per tenancy month and falls due when the month ends (Session 14; from the admin's rule)
+### Context
+Rent was one charge per calendar month, due from the 1st. A tenant who joined on 3 Sep showed two months due (Sep and Oct, 8,000 on 3 Oct) and September was marked Overdue straight away. The admin's rule: the tenant pays the first month on or after 3 Oct, one month after joining.
+### Decision
+Migration `0016_rent_cycles.sql`. A charge's `period` is now the day its tenancy month STARTS (3 Sep, 3 Oct, ...), counted from the joining date (31st starters get 28/29 Feb then 31 Mar, no drift). Each month's rent falls due on the day the next month starts (paid in arrears) and the charge is created only from that day. So on 3 Oct the tenant owes one month (3 Sep - 2 Oct). Overdue means the due date has passed, not the due date itself. If the tenant has left (end date today or earlier), the month they left in is billed in full and nothing starts after the end date. A leaving date in the future bills nothing early. The `day = 1` check on `period` is dropped. The rent payment ledger text reads "Rent - Name - month from 03 Sep 2026".
+### Migration effect
+Unpaid charges are deleted and recreated in the new form on the next screen load. Charges that already have a payment are kept unchanged (they would show their old calendar-month start). Run 0016 once.
+### Trade-offs / assumptions
+The leaving month is billed in full, not pro-rated. Reports that filter by month still work (they compare `period` to the range) but a tenancy month that straddles two calendar months counts in the month it starts. SQL tests: `0003_property_rental.test.sql` describes the old calendar rules, so run it BEFORE 0016; `0016_rent_cycles.test.sql` covers the new rules.
+
+## D-034 The tenant's name is the only name; mobile behaves like an app (Session 14)
+### Decision
+Godown names are no longer unique (migration `0017_tenant_name_not_unique.sql` drops `properties_name_key`), because the godown is listed by its tenant's name and two tenants can share one. The list column is "Tenant"; the godown location is an optional second line.
+Mobile: the viewport blocks pinch and double-tap zoom (`maximum-scale=1, user-scalable=no`, `touch-action: manipulation`, and a `gesturestart` / multi-touch `touchmove` guard because iOS Safari ignores the meta tag); fields stay 16px on phones so iOS never zooms on focus; buttons, links and tabs are not selectable and show no long-press menu. Phones and tablets (below 1024px) get a bottom bar: Home, Godowns, Transport, Money, More (More opens the full menu with Sheet rental, Gold loans, Reports, Install and Sign out); the top bar shows the screen name only and the floating "+" sits above the bar.
+### Trade-off
+Blocking zoom takes away a way for low-vision users to enlarge the page; text sizes were checked for phone reading instead (16px fields, 14px body). Browsers on desktop can still zoom.
+

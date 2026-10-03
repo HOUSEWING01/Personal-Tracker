@@ -25,7 +25,7 @@ function Form({ variant, onClose, onSaved }: { variant?: SheetVariant; onClose: 
   const choices = (products.data ?? []).filter((p) => p.status === 'active' || p.id === variant?.productId)
 
   return (
-    <form onSubmit={onSubmit} noValidate className="grid grid-cols-1 gap-4 md:grid-cols-2">
+    <form onSubmit={onSubmit} noValidate className="grid grid-cols-2 gap-x-3 gap-y-4 md:gap-4">
       <FormField id="vr-product" label="Product" error={errors.productId?.message}>
         <FormSelect control={control} name="productId" {...fieldA11y('vr-product', errors.productId?.message)} data-autofocus className={inputClass} disabled={products.isLoading}>
           <option value="">Choose a product</option>
@@ -44,17 +44,17 @@ function Form({ variant, onClose, onSaved }: { variant?: SheetVariant; onClose: 
         </FormSelect>
       </FormField>
       {variant && (
-        <div className="rounded-md bg-canvas px-3 py-2 text-xs text-muted md:col-span-2">
+        <div className="rounded-md bg-canvas px-3 py-2 text-xs text-muted col-span-2">
           Right now: {variant.rentedQuantity} rented, {variant.damagedQuantity} damaged, {variant.missingQuantity} missing, {variant.availableQuantity} available.
           The total cannot go below rented + damaged + missing.
         </div>
       )}
-      <FormField id="vr-notes" label="Notes (optional)" error={errors.notes?.message} className="md:col-span-2">
+      <FormField id="vr-notes" label="Notes (optional)" error={errors.notes?.message} className="col-span-2">
         <input {...register('notes')} {...fieldA11y('vr-notes', errors.notes?.message)} autoComplete="off" className={inputClass} />
       </FormField>
-      {products.isError && <p role="alert" className="rounded-md bg-danger-soft px-3 py-2 text-sm text-danger md:col-span-2">Could not load products. Close this and try again.</p>}
-      {!products.isLoading && !products.isError && choices.length === 0 && <p className="rounded-md bg-gold-soft px-3 py-2 text-sm text-primary md:col-span-2">Add a product in the Products tab first.</p>}
-      {save.isError && <p role="alert" className="rounded-md bg-danger-soft px-3 py-2 text-sm text-danger md:col-span-2">{sheetSubmitError(save.error, 'variant')}</p>}
+      {products.isError && <p role="alert" className="rounded-md bg-danger-soft px-3 py-2 text-sm text-danger col-span-2">Could not load products. Close this and try again.</p>}
+      {!products.isLoading && !products.isError && choices.length === 0 && <p className="rounded-md bg-gold-soft px-3 py-2 text-sm text-primary col-span-2">Add a product in the Products tab first.</p>}
+      {save.isError && <p role="alert" className="rounded-md bg-danger-soft px-3 py-2 text-sm text-danger col-span-2">{sheetSubmitError(save.error, 'variant')}</p>}
       <DialogActions>
         <button type="button" className={buttonSecondary} onClick={onClose}>Cancel</button>
         <button type="submit" className={buttonPrimary} disabled={save.isPending}>{save.isPending ? 'Saving…' : 'Save variant'}</button>

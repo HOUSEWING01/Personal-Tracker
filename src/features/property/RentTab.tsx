@@ -4,19 +4,27 @@ import { buttonSecondary } from '../../components/ui/FullScreenMessage'
 import { formatDate, todayIST } from '../../lib/dates'
 import { formatINR } from '../../lib/money'
 import { PAYMENT_METHODS } from '../finance/labels'
-import { useRentCharges, useRentPayments, useRentSync } from './hooks'
-import { chargeStatus, formatPeriod, isOverdue, outstanding } from './propertyEngine'
+import { Trash } from '@phosphor-icons/react'
+import { Dialog } from '../../components/ui/Dialog'
+import { buttonPrimary } from '../../components/ui/FullScreenMessage'
+import type { RentPayment } from '../../types/property'
+import { useDeleteRentPayment, useRentCharges, useRentPayments, useRentSync } from './hooks'
+import { chargeStatus, dueDate, formatCycle, isOverdue, outstanding } from './propertyEngine'
 import { RentPaymentDialog } from './RentPaymentDialog'
 import { ChargeStatusBadge } from './StatusBadge'
 
 const methodLabel = (v: string | null) => PAYMENT_METHODS.find((m) => m.value === v)?.label ?? '—'
 
-export function RentTab({ propertyId, hasTenant, onNotice }: { propertyId: string; hasTenant: boolean; onNotice: (m: string) => void }) {
+export function RentTab({ propertyId, hasTenant, firstDueDate, onNotice }: {
+  propertyId: string; hasTenant: boolean; /** The day the first month's rent falls due (YYYY-MM-DD). */ firstDueDate?: string; onNotice: (m: string) => void
+}) {
   const sync = useRentSync(propertyId)
   const charges = useRentCharges(propertyId, sync.isSuccess)
   const payments = useRentPayments(propertyId)
   const [paying, setPaying] = useState<{ period: string; outstandingPaise: number } | null>(null)
   const today = todayIST()
+  const del = useDeleteRentPayment(propertyId)
+  const [deleting, setDeleting] = useState<RentPayment | null>(null)
 
   if (sync.isError || charges.isError) {
     return (
@@ -32,7 +40,7 @@ export function RentTab({ propertyId, hasTenant, onNotice }: { propertyId: strin
     return (
       <EmptyState
         title={hasTenant ? 'No rent due yet' : 'No tenant'}
-        description={hasTenant ? 'Rent is created for each month from the rental start date. Check the rental start date.' : 'Use “New tenant” above to start monthly rent.'}
+        description={hasTenant ? `Rent is counted in months from the joining date and falls due when each month ends.${firstDueDate ? ` The first month is due on ${formatDate(firstDueDate)}.` : ''}` : 'Use “New tenant” above to start monthly rent.'}
       />
     )
   }
@@ -42,11 +50,28 @@ export function RentTab({ propertyId, hasTenant, onNotice }: { propertyId: strin
         open={paying !== null} propertyId={propertyId} period={paying?.period ?? ''} outstandingPaise={paying?.outstandingPaise ?? 0}
         onClose={() => setPaying(null)} onSaved={() => { setPaying(null); onNotice('Rent payment recorded and added to Transactions.') }}
       />
+      <Dialog open={deleting !== null} onClose={() => { if (!del.isPending) setDeleting(null) }} title="Delete payment?">
+        <p className="text-sm">
+          Delete the payment of <strong className="tabular-nums">{formatINR(deleting?.amountPaise ?? 0)}</strong> for {deleting ? formatCycle(deleting.period) : ''}?
+          It will also be removed from Transactions, and the rent will show as outstanding again. This cannot be undone.
+        </p>
+        {del.isError && <p role="alert" className="mt-3 rounded-md bg-danger-soft px-3 py-2 text-sm text-danger">Could not delete the payment. Please try again.</p>}
+        <div className="mt-4 flex gap-2 md:justify-end [&>button]:flex-1 md:[&>button]:flex-none">
+          <button type="button" className={buttonSecondary} disabled={del.isPending} onClick={() => setDeleting(null)}>Cancel</button>
+          <button
+            type="button" className={buttonPrimary} disabled={del.isPending}
+            onClick={async () => {
+              if (!deleting || del.isPending) return
+              try { await del.mutateAsync(deleting.id); setDeleting(null); onNotice('Rent payment deleted.') } catch { /* shown via del.isError */ }
+            }}
+          >{del.isPending ? 'Deleting…' : 'Delete'}</button>
+        </div>
+      </Dialog>
       <div className="hidden overflow-x-auto rounded-md border border-line bg-surface md:block">
         <table className="w-full text-sm">
           <thead className="border-b border-line text-left text-xs text-muted">
             <tr>
-              <th scope="col" className="px-4 py-2 font-medium">Month</th>
+              <th scope="col" className="px-4 py-2 font-medium">Rent month</th>
               <th scope="col" className="px-4 py-2 text-right font-medium">Expected</th>
               <th scope="col" className="px-4 py-2 text-right font-medium">Paid</th>
               <th scope="col" className="px-4 py-2 text-right font-medium">Outstanding</th>
@@ -59,13 +84,13 @@ export function RentTab({ propertyId, hasTenant, onNotice }: { propertyId: strin
               const out = outstanding(c.expectedPaise, c.paidPaise)
               return (
                 <tr key={c.id} className="border-b border-line last:border-0">
-                  <td className="whitespace-nowrap px-4 py-2.5 font-medium">{formatPeriod(c.period)}</td>
+                  <td className="whitespace-nowrap px-4 py-2.5"><span className="font-medium">{formatCycle(c.period)}</span><div className="text-xs text-muted">Due {formatDate(dueDate(c.period))}</div></td>
                   <td className="whitespace-nowrap px-4 py-2.5 text-right tabular-nums">{formatINR(c.expectedPaise)}</td>
                   <td className="whitespace-nowrap px-4 py-2.5 text-right tabular-nums">{formatINR(c.paidPaise)}</td>
                   <td className="whitespace-nowrap px-4 py-2.5 text-right font-medium tabular-nums">{formatINR(out)}</td>
                   <td className="px-4 py-2.5"><ChargeStatusBadge status={chargeStatus(c)} overdue={isOverdue(c, today)} /></td>
                   <td className="px-4 py-2.5 text-right">
-                    {out > 0 && <button type="button" className={buttonSecondary} aria-label={`Record payment for ${formatPeriod(c.period)}`} onClick={() => setPaying({ period: c.period, outstandingPaise: out })}>Record payment</button>}
+                    {out > 0 && <button type="button" className={buttonSecondary} aria-label={`Record payment for ${formatCycle(c.period)}`} onClick={() => setPaying({ period: c.period, outstandingPaise: out })}>Record payment</button>}
                   </td>
                 </tr>
               )
@@ -79,7 +104,7 @@ export function RentTab({ propertyId, hasTenant, onNotice }: { propertyId: strin
           return (
             <li key={c.id} className="rounded-md border border-line bg-surface px-4 py-3">
               <div className="flex items-start justify-between gap-3">
-                <span className="font-medium">{formatPeriod(c.period)}</span>
+                <span><span className="font-medium">{formatCycle(c.period)}</span><span className="block text-xs text-muted">Due {formatDate(dueDate(c.period))}</span></span>
                 <ChargeStatusBadge status={chargeStatus(c)} overdue={isOverdue(c, today)} />
               </div>
               <dl className="mt-2 grid grid-cols-3 gap-2 text-xs">
@@ -87,7 +112,7 @@ export function RentTab({ propertyId, hasTenant, onNotice }: { propertyId: strin
                 <div><dt className="text-muted">Paid</dt><dd className="font-medium tabular-nums">{formatINR(c.paidPaise)}</dd></div>
                 <div><dt className="text-muted">Outstanding</dt><dd className="font-medium tabular-nums">{formatINR(out)}</dd></div>
               </dl>
-              {out > 0 && <button type="button" className={`${buttonSecondary} mt-3 w-full`} aria-label={`Record payment for ${formatPeriod(c.period)}`} onClick={() => setPaying({ period: c.period, outstandingPaise: out })}>Record payment</button>}
+              {out > 0 && <button type="button" className={`${buttonSecondary} mt-3 w-full`} aria-label={`Record payment for ${formatCycle(c.period)}`} onClick={() => setPaying({ period: c.period, outstandingPaise: out })}>Record payment</button>}
             </li>
           )
         })}
@@ -104,8 +129,11 @@ export function RentTab({ propertyId, hasTenant, onNotice }: { propertyId: strin
         <ul className="divide-y divide-line rounded-md border border-line bg-surface">
           {payments.data?.map((pay) => (
             <li key={pay.id} className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 px-4 py-2.5 text-sm">
-              <span><span className="font-medium tabular-nums">{formatINR(pay.amountPaise)}</span> <span className="text-muted">for {formatPeriod(pay.period)}</span></span>
-              <span className="text-xs text-muted">{formatDate(pay.paymentDate)} · {methodLabel(pay.paymentMethod)}{pay.notes ? ` · ${pay.notes}` : ''}</span>
+              <span><span className="font-medium tabular-nums">{formatINR(pay.amountPaise)}</span> <span className="text-muted">for {formatCycle(pay.period)}</span></span>
+              <span className="flex items-center gap-2 text-xs text-muted">
+                <span>{formatDate(pay.paymentDate)} · {methodLabel(pay.paymentMethod)}{pay.notes ? ` · ${pay.notes}` : ''}</span>
+                <button type="button" aria-label={`Delete payment of ${formatINR(pay.amountPaise)} for ${formatCycle(pay.period)}`} className="rounded-md p-2 text-danger hover:bg-danger-soft" onClick={() => { del.reset(); setDeleting(pay) }}><Trash size={16} aria-hidden /></button>
+              </span>
             </li>
           ))}
         </ul>

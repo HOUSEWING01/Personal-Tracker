@@ -35,7 +35,7 @@ function PaymentForm({ rental, editing, onSaved, onCancelEdit }: {
     try { await save.mutateAsync(toSheetPaymentInput(values)); onSaved() } catch { /* shown via save.isError */ }
   })
   return (
-    <form onSubmit={onSubmit} noValidate className="grid grid-cols-1 gap-4 md:grid-cols-2" aria-label={editing ? 'Edit payment' : 'Record payment'}>
+    <form onSubmit={onSubmit} noValidate className="grid grid-cols-2 gap-x-3 gap-y-4 md:gap-4" aria-label={editing ? 'Edit payment' : 'Record payment'}>
       <FormField id="sp-amount" label="Amount (₹)" error={errors.amount?.message} hint="Part payments are fine.">
         <input {...register('amount')} {...fieldA11y('sp-amount', errors.amount?.message, true)} data-autofocus inputMode="decimal" autoComplete="off" placeholder="0.00" className={inputClass} />
       </FormField>
@@ -51,8 +51,8 @@ function PaymentForm({ rental, editing, onSaved, onCancelEdit }: {
       <FormField id="sp-notes" label="Notes (optional)" error={errors.notes?.message}>
         <input {...register('notes')} {...fieldA11y('sp-notes', errors.notes?.message)} autoComplete="off" className={inputClass} />
       </FormField>
-      <p className="text-xs text-muted md:col-span-2">Saving also adds this to Finance → Transactions as a customer payment. Editing it later updates that entry.</p>
-      {save.isError && <p role="alert" className="rounded-md bg-danger-soft px-3 py-2 text-sm text-danger md:col-span-2">{sheetSubmitError(save.error, 'payment')}</p>}
+      <p className="text-xs text-muted col-span-2">Saving also adds this to Finance → Transactions as a customer payment. Editing it later updates that entry.</p>
+      {save.isError && <p role="alert" className="rounded-md bg-danger-soft px-3 py-2 text-sm text-danger col-span-2">{sheetSubmitError(save.error, 'payment')}</p>}
       <DialogActions>
         {editing && <button type="button" className={buttonSecondary} onClick={onCancelEdit}>Cancel edit</button>}
         <button type="submit" className={buttonPrimary} disabled={save.isPending}>{save.isPending ? 'Saving…' : editing ? 'Save changes' : 'Record payment'}</button>

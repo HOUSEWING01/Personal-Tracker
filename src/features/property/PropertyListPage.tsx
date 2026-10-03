@@ -99,7 +99,7 @@ export function PropertyListPage() {
               <table className="w-full text-sm">
                 <thead className="border-b border-line bg-canvas/60 text-left text-xs text-muted">
                   <tr>
-                    <th scope="col" className="px-4 py-2.5 font-medium">Godown (tenant)</th>
+                    <th scope="col" className="px-4 py-2.5 font-medium">Tenant</th>
                     <th scope="col" className="px-4 py-2.5 text-right font-medium">Monthly rent</th>
                     <th scope="col" className="px-4 py-2.5 text-right font-medium">Rent due</th>
                     <th scope="col" className="px-4 py-2.5 text-right font-medium">Advance held</th>

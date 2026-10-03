@@ -23,7 +23,7 @@ describe('RentPaymentDialog', () => {
   it('is a labelled dialog, shows the outstanding for the month and prefills the amount', () => {
     setup()
     expect(screen.getByRole('dialog', { name: 'Record rent payment' })).toBeTruthy()
-    expect(screen.getByText(/Outstanding for Sep.* 2026/)).toBeTruthy()
+    expect(screen.getByText(/Outstanding for 1 Sep\w* – 30 Sep\w* 2026/)).toBeTruthy()
     expect((screen.getByLabelText('Amount (₹)') as HTMLInputElement).value).toBe('10000.00')
     expect(document.activeElement).toBe(screen.getByLabelText('Amount (₹)'))
   })

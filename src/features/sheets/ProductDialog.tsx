@@ -20,7 +20,7 @@ function Form({ product, onClose, onSaved }: { product?: SheetProduct; onClose: 
     try { await save.mutateAsync(toProductInput(values)); onSaved() } catch { /* shown via save.isError */ }
   })
   return (
-    <form onSubmit={onSubmit} noValidate className="grid grid-cols-1 gap-4 md:grid-cols-2">
+    <form onSubmit={onSubmit} noValidate className="grid grid-cols-2 gap-x-3 gap-y-4 md:gap-4">
       <FormField id="pr-name" label="Product name" error={errors.name?.message} hint="For example Roofing Sheet. Sizes are added as variants in Stock.">
         <input {...register('name')} {...fieldA11y('pr-name', errors.name?.message, true)} data-autofocus autoComplete="off" className={inputClass} />
       </FormField>
@@ -29,10 +29,10 @@ function Form({ product, onClose, onSaved }: { product?: SheetProduct; onClose: 
           {(['active', 'inactive'] as const).map((s) => <option key={s} value={s}>{ACTIVE_STATUS_LABELS[s]}</option>)}
         </FormSelect>
       </FormField>
-      <FormField id="pr-notes" label="Notes (optional)" error={errors.notes?.message} className="md:col-span-2">
+      <FormField id="pr-notes" label="Notes (optional)" error={errors.notes?.message} className="col-span-2">
         <input {...register('notes')} {...fieldA11y('pr-notes', errors.notes?.message)} autoComplete="off" className={inputClass} />
       </FormField>
-      {save.isError && <p role="alert" className="rounded-md bg-danger-soft px-3 py-2 text-sm text-danger md:col-span-2">{sheetSubmitError(save.error, 'product')}</p>}
+      {save.isError && <p role="alert" className="rounded-md bg-danger-soft px-3 py-2 text-sm text-danger col-span-2">{sheetSubmitError(save.error, 'product')}</p>}
       <DialogActions>
         <button type="button" className={buttonSecondary} onClick={onClose}>Cancel</button>
         <button type="submit" className={buttonPrimary} disabled={save.isPending}>{save.isPending ? 'Saving…' : 'Save product'}</button>

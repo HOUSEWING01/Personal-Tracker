@@ -78,6 +78,10 @@ body {
 
 /* ---- Mobile and admin-shell polish ---- */
 
+/* App-like touch behaviour: no double-tap zoom, no text selection or long-press menu on buttons, links and tabs. */
+html { touch-action: manipulation; }
+button, a, [role="tab"], [role="option"], nav { -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
+
 /* iOS Safari zooms the page when a focused field is under 16px. Keep fields at 16px on phones. */
 @media (max-width: 767px) {
   input:not([type="checkbox"]):not([type="radio"]):not([type="range"]), textarea, [role="combobox"] { font-size: 16px; }

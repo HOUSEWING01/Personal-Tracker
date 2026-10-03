@@ -48,8 +48,8 @@ function Form({ toll, onClose, onSaved }: { toll?: Toll; onClose: () => void; on
   }
 
   return (
-    <form onSubmit={onSubmit} noValidate className="grid grid-cols-1 gap-4 md:grid-cols-2">
-      <FormField id="tl-trip" label="Trip" error={errors.tripId?.message} className="md:col-span-2" hint="The toll is charged to this trip's vehicle.">
+    <form onSubmit={onSubmit} noValidate className="grid grid-cols-2 gap-x-3 gap-y-4 md:gap-4">
+      <FormField id="tl-trip" label="Trip" error={errors.tripId?.message} className="col-span-2" hint="The toll is charged to this trip's vehicle.">
         <FormSelect control={control} name="tripId" {...fieldA11y('tl-trip', errors.tripId?.message, true)} data-autofocus className={inputClass}>
           <option value="">Choose a trip</option>
           {(trips.data ?? []).map((t) => <option key={t.id} value={t.id}>{t.label}</option>)}
@@ -67,8 +67,8 @@ function Form({ toll, onClose, onSaved }: { toll?: Toll; onClose: () => void; on
       <FormField id="tl-notes" label="Notes (optional)" error={errors.notes?.message}>
         <input {...register('notes')} {...fieldA11y('tl-notes', errors.notes?.message)} autoComplete="off" className={inputClass} />
       </FormField>
-      <p className="rounded-md bg-canvas px-3 py-2 text-xs text-muted md:col-span-2">Saving records the toll in Finance as an expense. Editing it later updates that entry.</p>
-      {save.isError && <p role="alert" className="rounded-md bg-danger-soft px-3 py-2 text-sm text-danger md:col-span-2">{transportSubmitError(save.error, 'toll')}</p>}
+      <p className="rounded-md bg-canvas px-3 py-2 text-xs text-muted col-span-2">Saving records the toll in Finance as an expense. Editing it later updates that entry.</p>
+      {save.isError && <p role="alert" className="rounded-md bg-danger-soft px-3 py-2 text-sm text-danger col-span-2">{transportSubmitError(save.error, 'toll')}</p>}
       <DialogActions>
         <button type="button" className={buttonSecondary} onClick={onClose}>Cancel</button>
         <button type="submit" className={buttonPrimary} disabled={save.isPending}>{save.isPending ? 'Saving…' : 'Save toll'}</button>

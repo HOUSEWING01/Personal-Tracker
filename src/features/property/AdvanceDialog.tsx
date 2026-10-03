@@ -23,8 +23,8 @@ function Form({ propertyId, remainingPaise, onClose, onSaved }: { propertyId: st
     try { await record.mutateAsync(toAdvanceInput(values)); onSaved() } catch { /* shown via record.isError */ }
   })
   return (
-    <form onSubmit={onSubmit} noValidate className="grid grid-cols-1 gap-4 md:grid-cols-2">
-      <p className="text-sm text-muted md:col-span-2">Advance remaining: <strong className="text-ink">{formatINR(remainingPaise)}</strong></p>
+    <form onSubmit={onSubmit} noValidate className="grid grid-cols-2 gap-x-3 gap-y-4 md:gap-4">
+      <p className="text-sm text-muted col-span-2">Advance remaining: <strong className="text-ink">{formatINR(remainingPaise)}</strong></p>
       <FormField id="ad-kind" label="Movement" error={errors.kind?.message}>
         <FormSelect control={control} name="kind" {...fieldA11y('ad-kind', errors.kind?.message)} data-autofocus className={inputClass}>
           {(['received', 'adjusted', 'returned'] as const).map((k) => <option key={k} value={k}>{ADVANCE_KIND_LABELS[k]}</option>)}
@@ -39,8 +39,8 @@ function Form({ propertyId, remainingPaise, onClose, onSaved }: { propertyId: st
       <FormField id="ad-notes" label="Notes (optional)" error={errors.notes?.message}>
         <input {...register('notes')} {...fieldA11y('ad-notes', errors.notes?.message)} autoComplete="off" className={inputClass} />
       </FormField>
-      <p className="text-xs text-muted md:col-span-2">Received and returned entries are posted to Finance → Transactions as deposits: they count in cash flow, never in revenue or profit. Adjusted entries move no cash and are not posted.</p>
-      {record.isError && <p role="alert" className="rounded-md bg-danger-soft px-3 py-2 text-sm text-danger md:col-span-2">{submitError(record.error, 'advance entry')}</p>}
+      <p className="text-xs text-muted col-span-2">Received and returned entries are posted to Finance → Transactions as deposits: they count in cash flow, never in revenue or profit. Adjusted entries move no cash and are not posted.</p>
+      {record.isError && <p role="alert" className="rounded-md bg-danger-soft px-3 py-2 text-sm text-danger col-span-2">{submitError(record.error, 'advance entry')}</p>}
       <DialogActions>
         <button type="button" className={buttonSecondary} onClick={onClose}>Cancel</button>
         <button type="submit" className={buttonPrimary} disabled={record.isPending}>{record.isPending ? 'Saving…' : 'Save entry'}</button>

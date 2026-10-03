@@ -7,7 +7,7 @@ import { buttonPrimary, buttonSecondary } from '../../components/ui/FullScreenMe
 import { formatINR } from '../../lib/money'
 import { PAYMENT_METHODS } from '../finance/labels'
 import { useRecordRentPayment } from './hooks'
-import { formatPeriod } from './propertyEngine'
+import { formatCycle } from './propertyEngine'
 import { defaultRentPaymentValues, makeRentPaymentSchema, toRentPaymentInput, type RentPaymentFormValues } from './propertyForms'
 import { submitError } from './submitError'
 import { FormSelect } from '../../components/forms/Select'
@@ -26,8 +26,8 @@ function Form({ propertyId, period, outstandingPaise, onClose, onSaved }: {
     try { await record.mutateAsync({ period, ...toRentPaymentInput(values) }); onSaved() } catch { /* shown via record.isError */ }
   })
   return (
-    <form onSubmit={onSubmit} noValidate className="grid grid-cols-1 gap-4 md:grid-cols-2">
-      <p className="text-sm text-muted md:col-span-2">Outstanding for {formatPeriod(period)}: <strong className="text-ink">{formatINR(outstandingPaise)}</strong></p>
+    <form onSubmit={onSubmit} noValidate className="grid grid-cols-2 gap-x-3 gap-y-4 md:gap-4">
+      <p className="text-sm text-muted col-span-2">Outstanding for {formatCycle(period)}: <strong className="text-ink">{formatINR(outstandingPaise)}</strong></p>
       <FormField id="rp-amount" label="Amount (₹)" error={errors.amount?.message} hint="Part payments are fine.">
         <input {...register('amount')} {...fieldA11y('rp-amount', errors.amount?.message, true)} data-autofocus inputMode="decimal" autoComplete="off" className={inputClass} />
       </FormField>
@@ -43,8 +43,8 @@ function Form({ propertyId, period, outstandingPaise, onClose, onSaved }: {
       <FormField id="rp-notes" label="Notes (optional)" error={errors.notes?.message}>
         <input {...register('notes')} {...fieldA11y('rp-notes', errors.notes?.message)} autoComplete="off" className={inputClass} />
       </FormField>
-      <p className="text-xs text-muted md:col-span-2">Saving also adds this payment to Finance → Transactions.</p>
-      {record.isError && <p role="alert" className="rounded-md bg-danger-soft px-3 py-2 text-sm text-danger md:col-span-2">{submitError(record.error, 'payment')}</p>}
+      <p className="text-xs text-muted col-span-2">Saving also adds this payment to Finance → Transactions.</p>
+      {record.isError && <p role="alert" className="rounded-md bg-danger-soft px-3 py-2 text-sm text-danger col-span-2">{submitError(record.error, 'payment')}</p>}
       <DialogActions>
         <button type="button" className={buttonSecondary} onClick={onClose}>Cancel</button>
         <button type="submit" className={buttonPrimary} disabled={record.isPending}>{record.isPending ? 'Saving…' : 'Record payment'}</button>

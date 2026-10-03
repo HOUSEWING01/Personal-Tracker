@@ -45,7 +45,7 @@ function Form({ vehicle, onClose, onSaved }: { vehicle?: Vehicle; onClose: () =>
   })
 
   return (
-    <form onSubmit={onSubmit} noValidate className="grid grid-cols-1 gap-4 md:grid-cols-2">
+    <form onSubmit={onSubmit} noValidate className="grid grid-cols-2 gap-x-3 gap-y-4 md:gap-4">
       <FormField id="vh-name" label="Vehicle name" error={errors.name?.message}>
         <input {...register('name')} {...fieldA11y('vh-name', errors.name?.message)} data-autofocus autoComplete="off" className={inputClass} />
       </FormField>
@@ -64,7 +64,7 @@ function Form({ vehicle, onClose, onSaved }: { vehicle?: Vehicle; onClose: () =>
       <FormField id="vh-cdetails" label="Container details (optional)" error={errors.containerDetails?.message}>
         <input {...register('containerDetails')} {...fieldA11y('vh-cdetails', errors.containerDetails?.message)} autoComplete="off" className={inputClass} />
       </FormField>
-      <div className="rounded-md bg-canvas px-3 py-2 text-sm md:col-span-2" aria-live="polite">
+      <div className="rounded-md bg-canvas px-3 py-2 text-sm col-span-2" aria-live="polite">
         <span className="text-muted">Total investment (purchase + container): </span>
         <span className="font-medium tabular-nums">{formatINR(total)}</span>
         <p className="mt-1 text-xs text-muted">Saving records the purchase price and the container price in Finance as investments. Editing a price later updates those entries.</p>
@@ -77,7 +77,7 @@ function Form({ vehicle, onClose, onSaved }: { vehicle?: Vehicle; onClose: () =>
       <FormField id="vh-notes" label="Notes (optional)" error={errors.notes?.message}>
         <input {...register('notes')} {...fieldA11y('vh-notes', errors.notes?.message)} autoComplete="off" className={inputClass} />
       </FormField>
-      {save.isError && <p role="alert" className="rounded-md bg-danger-soft px-3 py-2 text-sm text-danger md:col-span-2">{transportSubmitError(save.error, 'vehicle')}</p>}
+      {save.isError && <p role="alert" className="rounded-md bg-danger-soft px-3 py-2 text-sm text-danger col-span-2">{transportSubmitError(save.error, 'vehicle')}</p>}
       <DialogActions>
         <button type="button" className={buttonSecondary} onClick={onClose}>Cancel</button>
         <button type="submit" className={buttonPrimary} disabled={save.isPending}>{save.isPending ? 'Saving…' : 'Save vehicle'}</button>

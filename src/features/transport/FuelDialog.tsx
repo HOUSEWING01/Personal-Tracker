@@ -64,7 +64,7 @@ function Form({ fuel, onClose, onSaved }: { fuel?: FuelLog; onClose: () => void;
   }
 
   return (
-    <form onSubmit={onSubmit} noValidate className="grid grid-cols-1 gap-4 md:grid-cols-2">
+    <form onSubmit={onSubmit} noValidate className="grid grid-cols-2 gap-x-3 gap-y-4 md:gap-4">
       <FormField id="fu-vehicle" label="Vehicle" error={errors.vehicleId?.message}>
         <FormSelect control={control} name="vehicleId" onValueChange={() => setValue('tripId', '')} {...fieldA11y('fu-vehicle', errors.vehicleId?.message)} data-autofocus className={inputClass}>
           <option value="">Choose a vehicle</option>
@@ -80,7 +80,7 @@ function Form({ fuel, onClose, onSaved }: { fuel?: FuelLog; onClose: () => void;
       <FormField id="fu-price" label="Price per litre (₹)" error={errors.pricePerLitre?.message}>
         <input {...register('pricePerLitre')} {...fieldA11y('fu-price', errors.pricePerLitre?.message)} inputMode="decimal" autoComplete="off" placeholder="0.00" className={inputClass} />
       </FormField>
-      <div className="rounded-md bg-canvas px-3 py-2 text-sm md:col-span-2" aria-live="polite">
+      <div className="rounded-md bg-canvas px-3 py-2 text-sm col-span-2" aria-live="polite">
         <span className="text-muted">Total (litres × price): </span>
         <span className="font-medium tabular-nums">{formatINR(total)}</span>
         <p className="mt-1 text-xs text-muted">Saving records the total in Finance as an expense. Editing the fuel log later updates that entry.</p>
@@ -94,10 +94,10 @@ function Form({ fuel, onClose, onSaved }: { fuel?: FuelLog; onClose: () => void;
           {tripsForVehicle.map((t) => <option key={t.id} value={t.id}>{t.label}</option>)}
         </FormSelect>
       </FormField>
-      <FormField id="fu-notes" label="Notes (optional)" error={errors.notes?.message} className="md:col-span-2">
+      <FormField id="fu-notes" label="Notes (optional)" error={errors.notes?.message} className="col-span-2">
         <input {...register('notes')} {...fieldA11y('fu-notes', errors.notes?.message)} autoComplete="off" className={inputClass} />
       </FormField>
-      {save.isError && <p role="alert" className="rounded-md bg-danger-soft px-3 py-2 text-sm text-danger md:col-span-2">{transportSubmitError(save.error, 'fuel log')}</p>}
+      {save.isError && <p role="alert" className="rounded-md bg-danger-soft px-3 py-2 text-sm text-danger col-span-2">{transportSubmitError(save.error, 'fuel log')}</p>}
       <DialogActions>
         <button type="button" className={buttonSecondary} onClick={onClose}>Cancel</button>
         <button type="submit" className={buttonPrimary} disabled={save.isPending}>{save.isPending ? 'Saving…' : 'Save fuel'}</button>

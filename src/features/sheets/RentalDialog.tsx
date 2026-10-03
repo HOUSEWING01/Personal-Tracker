@@ -75,8 +75,8 @@ function Form({ rental, onClose, onSaved }: { rental?: SheetRental; onClose: () 
   const activeVariants = (variants.data ?? []).filter((v) => v.status === 'active' || v.id === rental?.variantId)
 
   return (
-    <form onSubmit={onSubmit} noValidate className="grid grid-cols-1 gap-4 md:grid-cols-2">
-      <FormField id="rt-customer" label="Customer" error={errors.customerId?.message} className="md:col-span-2">
+    <form onSubmit={onSubmit} noValidate className="grid grid-cols-2 gap-x-3 gap-y-4 md:gap-4">
+      <FormField id="rt-customer" label="Customer" error={errors.customerId?.message} className="col-span-2">
         <FormSelect control={control} name="customerId" {...fieldA11y('rt-customer', errors.customerId?.message)} data-autofocus className={inputClass} disabled={customers.isLoading}>
           <option value="">Choose a customer</option>
           <option value={NEW_CUSTOMER}>＋ New customer…</option>
@@ -91,12 +91,12 @@ function Form({ rental, onClose, onSaved }: { rental?: SheetRental; onClose: () 
           <FormField id="rt-new-mobile" label="Mobile (optional)" error={errors.newMobile?.message} hint="10 digits.">
             <input {...register('newMobile')} {...fieldA11y('rt-new-mobile', errors.newMobile?.message, true)} inputMode="numeric" autoComplete="off" className={inputClass} />
           </FormField>
-          <FormField id="rt-new-address" label="Address (optional)" error={errors.newAddress?.message} className="md:col-span-2">
+          <FormField id="rt-new-address" label="Address (optional)" error={errors.newAddress?.message} className="col-span-2">
             <input {...register('newAddress')} {...fieldA11y('rt-new-address', errors.newAddress?.message)} autoComplete="off" className={inputClass} />
           </FormField>
         </>
       )}
-      {customers.isError && <p role="alert" className="rounded-md bg-danger-soft px-3 py-2 text-sm text-danger md:col-span-2">Could not load customers. You can still add a new one.</p>}
+      {customers.isError && <p role="alert" className="rounded-md bg-danger-soft px-3 py-2 text-sm text-danger col-span-2">Could not load customers. You can still add a new one.</p>}
 
       <FormField id="rt-variant" label="Product and size" error={errors.variantId?.message}
         hint={variant ? `${variant.availableQuantity} available of ${variant.totalQuantity} owned.` : rental ? 'The size cannot change on an existing rental.' : undefined}>
@@ -108,8 +108,8 @@ function Form({ rental, onClose, onSaved }: { rental?: SheetRental; onClose: () 
       <FormField id="rt-quantity" label="Quantity" error={errors.quantity?.message}>
         <input {...register('quantity')} {...fieldA11y('rt-quantity', errors.quantity?.message)} inputMode="numeric" autoComplete="off" className={inputClass} />
       </FormField>
-      {variants.isError && <p role="alert" className="rounded-md bg-danger-soft px-3 py-2 text-sm text-danger md:col-span-2">Could not load sizes. Close this and try again.</p>}
-      {!variants.isLoading && !variants.isError && activeVariants.length === 0 && <p className="rounded-md bg-gold-soft px-3 py-2 text-sm text-primary md:col-span-2">Add a product and a size in the Products and Stock tabs first.</p>}
+      {variants.isError && <p role="alert" className="rounded-md bg-danger-soft px-3 py-2 text-sm text-danger col-span-2">Could not load sizes. Close this and try again.</p>}
+      {!variants.isLoading && !variants.isError && activeVariants.length === 0 && <p className="rounded-md bg-gold-soft px-3 py-2 text-sm text-primary col-span-2">Add a product and a size in the Products and Stock tabs first.</p>}
 
       <FormField id="rt-date" label="Rental date" error={errors.rentalDate?.message}>
         <FormDatePicker control={control} name="rentalDate" {...fieldA11y('rt-date', errors.rentalDate?.message)} className={inputClass} />
@@ -124,7 +124,7 @@ function Form({ rental, onClose, onSaved }: { rental?: SheetRental; onClose: () 
       <FormField id="rt-discount" label="Discount (₹, optional)" error={errors.discount?.message}>
         <input {...register('discount')} {...fieldA11y('rt-discount', errors.discount?.message)} inputMode="decimal" autoComplete="off" placeholder="0.00" className={inputClass} />
       </FormField>
-      <p className="rounded-md bg-canvas px-3 py-2 text-sm md:col-span-2" aria-live="polite">Net rent: <strong className="tabular-nums">{formatINR(net)}</strong> <span className="text-muted">(rent minus discount)</span></p>
+      <p className="rounded-md bg-canvas px-3 py-2 text-sm col-span-2" aria-live="polite">Net rent: <strong className="tabular-nums">{formatINR(net)}</strong> <span className="text-muted">(rent minus discount)</span></p>
 
       {!rental && (
         <>
@@ -139,16 +139,16 @@ function Form({ rental, onClose, onSaved }: { rental?: SheetRental; onClose: () 
           </FormField>
         </>
       )}
-      <FormField id="rt-notes" label="Notes (optional)" error={errors.notes?.message} className="md:col-span-2">
+      <FormField id="rt-notes" label="Notes (optional)" error={errors.notes?.message} className="col-span-2">
         <input {...register('notes')} {...fieldA11y('rt-notes', errors.notes?.message)} autoComplete="off" className={inputClass} />
       </FormField>
 
-      {newCustomer.isError && <p role="alert" className="rounded-md bg-danger-soft px-3 py-2 text-sm text-danger md:col-span-2">{sheetSubmitError(newCustomer.error, 'customer')}</p>}
-      {save.isError && <p role="alert" className="rounded-md bg-danger-soft px-3 py-2 text-sm text-danger md:col-span-2">{sheetSubmitError(save.error, 'rental')}</p>}
-      {cancel.isError && <p role="alert" className="rounded-md bg-danger-soft px-3 py-2 text-sm text-danger md:col-span-2">{sheetSubmitError(cancel.error, 'rental')}</p>}
+      {newCustomer.isError && <p role="alert" className="rounded-md bg-danger-soft px-3 py-2 text-sm text-danger col-span-2">{sheetSubmitError(newCustomer.error, 'customer')}</p>}
+      {save.isError && <p role="alert" className="rounded-md bg-danger-soft px-3 py-2 text-sm text-danger col-span-2">{sheetSubmitError(save.error, 'rental')}</p>}
+      {cancel.isError && <p role="alert" className="rounded-md bg-danger-soft px-3 py-2 text-sm text-danger col-span-2">{sheetSubmitError(cancel.error, 'rental')}</p>}
 
       {canCancel && (
-        <div className="rounded-md border border-line px-3 py-2 text-sm md:col-span-2">
+        <div className="rounded-md border border-line px-3 py-2 text-sm col-span-2">
           {confirmCancel ? (
             <div className="flex flex-wrap items-center justify-between gap-2">
               <span>Cancel this rental? The sheets become available again.</span>

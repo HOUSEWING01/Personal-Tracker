@@ -30,18 +30,18 @@ function PaymentForm({ loan, editing, onSaved, onCancelEdit }: {
   })
 
   return (
-    <form onSubmit={onSubmit} noValidate className="grid grid-cols-1 gap-4 md:grid-cols-2" aria-label={editing ? 'Edit payment' : 'Record payment'}>
+    <form onSubmit={onSubmit} noValidate className="grid grid-cols-2 gap-x-3 gap-y-4 md:gap-4" aria-label={editing ? 'Edit payment' : 'Record payment'}>
       <FormField id="lp-date" label="Payment date" error={errors.paymentDate?.message}>
         <FormDatePicker control={control} name="paymentDate" {...fieldA11y('lp-date', errors.paymentDate?.message)} data-autofocus className={inputClass} />
       </FormField>
       <FormField id="lp-amount" label="Amount paid (₹)" error={errors.amount?.message} hint="The full amount paid, interest included.">
         <input {...register('amount')} {...fieldA11y('lp-amount', errors.amount?.message, true)} inputMode="decimal" autoComplete="off" placeholder="0.00" className={inputClass} />
       </FormField>
-      <FormField id="lp-notes" label="Notes (optional)" error={errors.notes?.message} className="md:col-span-2">
+      <FormField id="lp-notes" label="Notes (optional)" error={errors.notes?.message} className="col-span-2">
         <input {...register('notes')} {...fieldA11y('lp-notes', errors.notes?.message)} autoComplete="off" className={inputClass} />
       </FormField>
-      <p className="text-xs text-muted md:col-span-2">Saving records this in Finance as a loan repayment for the full amount. Editing it later updates that entry.</p>
-      {save.isError && <p role="alert" className="rounded-md bg-danger-soft px-3 py-2 text-sm text-danger md:col-span-2">{transportSubmitError(save.error, 'payment')}</p>}
+      <p className="text-xs text-muted col-span-2">Saving records this in Finance as a loan repayment for the full amount. Editing it later updates that entry.</p>
+      {save.isError && <p role="alert" className="rounded-md bg-danger-soft px-3 py-2 text-sm text-danger col-span-2">{transportSubmitError(save.error, 'payment')}</p>}
       <DialogActions>
         {editing && <button type="button" className={buttonSecondary} onClick={onCancelEdit}>Cancel edit</button>}
         <button type="submit" className={buttonPrimary} disabled={save.isPending}>{save.isPending ? 'Saving…' : editing ? 'Save changes' : 'Record payment'}</button>

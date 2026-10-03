@@ -9,7 +9,7 @@ import { todayIST, formatDate } from '../../lib/dates'
 import { toast } from '../../lib/toast'
 import { formatINR } from '../../lib/money'
 import { useProperty, useTenant } from './hooks'
-import { isOccupied, propertyTotals } from './propertyEngine'
+import { dueDate, isOccupied, propertyTotals } from './propertyEngine'
 import { AdvanceDialog } from './AdvanceDialog'
 import { AdvanceTab } from './AdvanceTab'
 import { GodownDialog, type GodownMode } from './GodownDialog'
@@ -87,7 +87,7 @@ export function PropertyDetailPage() {
 
       <section className="mt-8" aria-labelledby="rent-h">
         <h2 id="rent-h" className="mb-3 text-base font-semibold">Rent</h2>
-        <RentTab propertyId={prop.id} hasTenant={Boolean(prop.tenantName)} onNotice={(m) => toast.success(m)} />
+        <RentTab propertyId={prop.id} hasTenant={Boolean(prop.tenantName)} firstDueDate={t ? dueDate(t.rentalStartDate) : undefined} onNotice={(m) => toast.success(m)} />
       </section>
 
       <section className="mt-8" aria-labelledby="adv-h">

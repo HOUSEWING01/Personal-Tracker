@@ -23,7 +23,7 @@ function Form({ driver, onClose, onSaved }: { driver?: Driver; onClose: () => vo
     try { await save.mutateAsync(toDriverInput(values)); onSaved() } catch { /* shown via save.isError */ }
   })
   return (
-    <form onSubmit={onSubmit} noValidate className="grid grid-cols-1 gap-4 md:grid-cols-2">
+    <form onSubmit={onSubmit} noValidate className="grid grid-cols-2 gap-x-3 gap-y-4 md:gap-4">
       <FormField id="dr-name" label="Driver name" error={errors.name?.message}>
         <input {...register('name')} {...fieldA11y('dr-name', errors.name?.message)} data-autofocus autoComplete="off" className={inputClass} />
       </FormField>
@@ -38,10 +38,10 @@ function Form({ driver, onClose, onSaved }: { driver?: Driver; onClose: () => vo
           {(['active', 'inactive'] as const).map((s) => <option key={s} value={s}>{DRIVER_STATUS_LABELS[s]}</option>)}
         </FormSelect>
       </FormField>
-      <FormField id="dr-notes" label="Notes (optional)" error={errors.notes?.message} className="md:col-span-2">
+      <FormField id="dr-notes" label="Notes (optional)" error={errors.notes?.message} className="col-span-2">
         <input {...register('notes')} {...fieldA11y('dr-notes', errors.notes?.message)} autoComplete="off" className={inputClass} />
       </FormField>
-      {save.isError && <p role="alert" className="rounded-md bg-danger-soft px-3 py-2 text-sm text-danger md:col-span-2">{transportSubmitError(save.error, 'driver')}</p>}
+      {save.isError && <p role="alert" className="rounded-md bg-danger-soft px-3 py-2 text-sm text-danger col-span-2">{transportSubmitError(save.error, 'driver')}</p>}
       <DialogActions>
         <button type="button" className={buttonSecondary} onClick={onClose}>Cancel</button>
         <button type="submit" className={buttonPrimary} disabled={save.isPending}>{save.isPending ? 'Saving…' : 'Save driver'}</button>

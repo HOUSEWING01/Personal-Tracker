@@ -32,15 +32,15 @@ function Form({ mode, property, tenant, onClose, onSaved }: {
     try { onSaved(await save.mutateAsync(toGodownInput(values))) } catch { /* shown via save.isError */ }
   })
   return (
-    <form onSubmit={onSubmit} noValidate className="grid grid-cols-1 gap-4 md:grid-cols-2">
-      <FormField id="gd-name" label="Tenant name" error={errors.name?.message} hint="The godown is listed under this name." className="md:col-span-2">
+    <form onSubmit={onSubmit} noValidate className="grid grid-cols-2 gap-x-3 gap-y-4 md:gap-4">
+      <FormField id="gd-name" label="Tenant name" error={errors.name?.message} hint="Godowns are listed by their tenant’s name." className="col-span-2">
         <input {...register('name')} {...fieldA11y('gd-name', errors.name?.message, true)} data-autofocus autoComplete="off" className={inputClass} />
       </FormField>
       <FormField id="gd-rent" label="Monthly rent (₹)" error={errors.monthlyRent?.message}
         hint={mode === 'edit' ? 'A new rent applies to months not yet created.' : undefined}>
         <input {...register('monthlyRent')} {...fieldA11y('gd-rent', errors.monthlyRent?.message, !!(mode === 'edit'))} inputMode="decimal" autoComplete="off" placeholder="0.00" className={inputClass} />
       </FormField>
-      <FormField id="gd-start" label="Rental start date" error={errors.rentalStartDate?.message} hint="Rent is created from this month.">
+      <FormField id="gd-start" label="Rental start date" error={errors.rentalStartDate?.message} hint="The first month’s rent is due one month after this date.">
         <FormDatePicker control={control} name="rentalStartDate" {...fieldA11y('gd-start', errors.rentalStartDate?.message, true)} className={inputClass} />
       </FormField>
       {mode !== 'edit' && (
@@ -51,10 +51,10 @@ function Form({ mode, property, tenant, onClose, onSaved }: {
       <FormField id="gd-mobile" label="Mobile (optional)" error={errors.mobile?.message} hint="10 digits, no spaces.">
         <input {...register('mobile')} {...fieldA11y('gd-mobile', errors.mobile?.message, true)} inputMode="numeric" autoComplete="off" className={inputClass} />
       </FormField>
-      <FormField id="gd-address" label="Godown location (optional)" error={errors.address?.message} className="md:col-span-2">
+      <FormField id="gd-address" label="Godown location (optional)"  error={errors.address?.message} className="col-span-2">
         <input {...register('address')} {...fieldA11y('gd-address', errors.address?.message)} autoComplete="off" className={inputClass} />
       </FormField>
-      {save.isError && <p role="alert" className="rounded-md bg-danger-soft px-3 py-2 text-sm text-danger md:col-span-2">{submitError(save.error, 'godown')} Press Save again to retry. Anything already saved is not repeated.</p>}
+      {save.isError && <p role="alert" className="rounded-md bg-danger-soft px-3 py-2 text-sm text-danger col-span-2">{submitError(save.error, 'godown')} Press Save again to retry. Anything already saved is not repeated.</p>}
       <DialogActions>
         <button type="button" className={buttonSecondary} onClick={onClose}>Cancel</button>
         <button type="submit" className={buttonPrimary} disabled={save.isPending}>{save.isPending ? 'Saving…' : 'Save godown'}</button>

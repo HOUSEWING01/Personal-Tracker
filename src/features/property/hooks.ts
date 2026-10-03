@@ -1,7 +1,7 @@
 import { useRef } from 'react'
 import { keepPreviousData, useMutation, useQuery, useQueryClient, type QueryClient } from '@tanstack/react-query'
 import {
-  createProperty, ensureRentCharges, getProperty, getTenant, listAdvanceMovements, listProperties, listRentCharges,
+  createProperty, deleteRentPayment, ensureRentCharges, getProperty, getTenant, listAdvanceMovements, listProperties, listRentCharges,
   listRentPayments, recordAdvanceMovement, recordRentPayment, saveTenant, updateProperty,
   type AdvanceInput, type PropertyFilters, type PropertyInput, type RentPaymentInput, type TenantInput,
 } from '../../services/propertyService'
@@ -67,6 +67,19 @@ export function useRecordRentPayment(propertyId: string) {
       qc.invalidateQueries({ queryKey: ['rent-payments', propertyId] }),
       qc.invalidateQueries({ queryKey: ['transactions'] }),
       qc.invalidateQueries({ queryKey: ['finance-summary'] }),
+    ]),
+  })
+}
+export function useDeleteRentPayment(propertyId: string) {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (paymentId: string) => deleteRentPayment(paymentId),
+    onSuccess: () => Promise.all([
+      refreshProperty(qc),
+      qc.invalidateQueries({ queryKey: ['rent-charges', propertyId] }),
+      qc.invalidateQueries({ queryKey: ['rent-payments', propertyId] }),
+      qc.invalidateQueries({ queryKey: ['transactions'] }), qc.invalidateQueries({ queryKey: ['finance-summary'] }),
+      qc.invalidateQueries({ queryKey: ['dashboard'] }), qc.invalidateQueries({ queryKey: ['report-breakdown'] }),
     ]),
   })
 }

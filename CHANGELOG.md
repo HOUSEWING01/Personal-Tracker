@@ -3,6 +3,8 @@
 ## Session 14 - Godowns (D-032)
 - Property rental screens simplified for godowns only: list "Godowns", one add form (tenant, rent, start date, advance), one page per godown (no tabs), "Tenant leaving" returns the advance, "New tenant" re-lets. New `GodownDialog`, `LeavingDialog`, `useSaveGodown`, `useLeaveTenancy`; removed `PropertyDialog`, `TenantDialog`, `TenantTab`. No database change.
 - Tests: 9 new (form schemas 5, dialog 4 including retry after a partial failure).
+- Rent months (D-033): migration 0016 bills per tenancy month from the joining day, due when the month ends (joined 3 Sep: first month 3 Sep - 2 Oct is due 3 Oct). Rent screen shows the month range and due date; overdue only after the due date. 18 SQL checks (`0016_rent_cycles.test.sql`) and 5 engine tests; 0012 and 0013 SQL tests still pass with 0016.
+- Tenant-first naming (migration 0017 drops the unique godown name) and a mobile app feel (D-034): no pinch / double-tap zoom, bottom tab bar with More, floating + above it.
 - Transport lists: no search / add buttons on an empty first-use list, Transport page description removed.
 
 ## Session 13 - Themed dropdowns and date picker (D-031)

@@ -82,7 +82,7 @@ function Form({ trip, onClose, onSaved }: { trip?: Trip; onClose: () => void; on
   }
 
   return (
-    <form onSubmit={onSubmit} noValidate className="grid grid-cols-1 gap-4 md:grid-cols-2">
+    <form onSubmit={onSubmit} noValidate className="grid grid-cols-2 gap-x-3 gap-y-4 md:gap-4">
       <FormField id="tr-vehicle" label="Vehicle" error={errors.vehicleId?.message}>
         <FormSelect control={control} name="vehicleId" {...fieldA11y('tr-vehicle', errors.vehicleId?.message)} data-autofocus className={inputClass}>
           <option value="">Choose a vehicle</option>
@@ -95,7 +95,7 @@ function Form({ trip, onClose, onSaved }: { trip?: Trip; onClose: () => void; on
           {drivers.map((d) => <option key={d.id} value={d.id}>{d.name}</option>)}
         </FormSelect>
       </FormField>
-      <FormField id="tr-customer" label="Customer" error={errors.customerId?.message} className="md:col-span-2">
+      <FormField id="tr-customer" label="Customer" error={errors.customerId?.message} className="col-span-2">
         <FormSelect control={control} name="customerId" {...fieldA11y('tr-customer', errors.customerId?.message)} className={inputClass}>
           <option value="">Choose a customer</option>
           {customers.map((c) => <option key={c.id} value={c.id}>{c.name}{c.mobile ? ` (${c.mobile})` : ''}</option>)}
@@ -119,7 +119,7 @@ function Form({ trip, onClose, onSaved }: { trip?: Trip; onClose: () => void; on
       <FormField id="tr-date" label="Trip date" error={errors.tripDate?.message}>
         <FormDatePicker control={control} name="tripDate" {...fieldA11y('tr-date', errors.tripDate?.message)} className={inputClass} />
       </FormField>
-      <div className="rounded-md bg-canvas px-3 py-2 text-sm md:col-span-2" aria-live="polite">
+      <div className="rounded-md bg-canvas px-3 py-2 text-sm col-span-2" aria-live="polite">
         <div><span className="text-muted">Revenue (distance × rate): </span><span className="font-medium tabular-nums">{formatINR(revenue)}</span></div>
         <div>
           <span className="text-muted">Operating profit (after driver payment, fuel and toll): </span>
@@ -140,7 +140,7 @@ function Form({ trip, onClose, onSaved }: { trip?: Trip; onClose: () => void; on
       <FormField id="tr-notes" label="Notes (optional)" error={errors.notes?.message}>
         <input {...register('notes')} {...fieldA11y('tr-notes', errors.notes?.message)} autoComplete="off" className={inputClass} />
       </FormField>
-      {save.isError && <p role="alert" className="rounded-md bg-danger-soft px-3 py-2 text-sm text-danger md:col-span-2">{transportSubmitError(save.error, 'trip')}</p>}
+      {save.isError && <p role="alert" className="rounded-md bg-danger-soft px-3 py-2 text-sm text-danger col-span-2">{transportSubmitError(save.error, 'trip')}</p>}
       <DialogActions>
         <button type="button" className={buttonSecondary} onClick={onClose}>Cancel</button>
         <button type="submit" className={buttonPrimary} disabled={save.isPending}>{save.isPending ? 'Saving…' : 'Save trip'}</button>

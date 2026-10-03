@@ -132,6 +132,12 @@ export async function recordRentPayment(propertyId: string, period: string, p: R
   return data as string
 }
 
+/** Deletes the payment and its ledger entry in one database transaction (admin only). */
+export async function deleteRentPayment(paymentId: string): Promise<void> {
+  const { error } = await supabase.rpc('delete_rent_payment', { p_payment_id: paymentId })
+  if (error) throw error
+}
+
 // ---------- advance ----------
 export async function listAdvanceMovements(propertyId: string): Promise<AdvanceMovement[]> {
   const { data, error } = await supabase.from('advance_movements').select('*').eq('property_id', propertyId)

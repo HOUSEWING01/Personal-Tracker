@@ -33,7 +33,7 @@ function Form({ onClose, onSaved }: { onClose: () => void; onSaved: () => void }
   })
 
   return (
-    <form onSubmit={onSubmit} noValidate className="grid grid-cols-1 gap-4 md:grid-cols-2">
+    <form onSubmit={onSubmit} noValidate className="grid grid-cols-2 gap-x-3 gap-y-4 md:gap-4">
       <FormField id="tx-type" label="Type" error={errors.type?.message}>
         <FormSelect control={control} name="type" {...fieldA11y('tx-type', errors.type?.message)} data-autofocus className={inputClass}>
           {MANUAL_TRANSACTION_TYPES.map((t) => <option key={t} value={t}>{TYPE_LABELS[t]}</option>)}
@@ -57,12 +57,12 @@ function Form({ onClose, onSaved }: { onClose: () => void; onSaved: () => void }
           {PAYMENT_METHODS.map((m) => <option key={m.value} value={m.value}>{m.label}</option>)}
         </FormSelect>
       </FormField>
-      <FormField id="tx-desc" label={isAdjustment ? 'Reason' : 'Description (optional)'} error={errors.description?.message} className="md:col-span-2">
+      <FormField id="tx-desc" label={isAdjustment ? 'Reason' : 'Description (optional)'} error={errors.description?.message} className="col-span-2">
         <input {...register('description')} {...fieldA11y('tx-desc', errors.description?.message)} autoComplete="off" className={inputClass} />
       </FormField>
 
       {create.isError && (
-        <p role="alert" className="rounded-md bg-danger-soft px-3 py-2 text-sm text-danger md:col-span-2">{submitErrorMessage(create.error)}</p>
+        <p role="alert" className="rounded-md bg-danger-soft px-3 py-2 text-sm text-danger col-span-2">{submitErrorMessage(create.error)}</p>
       )}
       <DialogActions>
         <button type="button" className={buttonSecondary} onClick={onClose}>Cancel</button>

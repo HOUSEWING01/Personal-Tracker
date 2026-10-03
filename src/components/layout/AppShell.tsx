@@ -1,11 +1,19 @@
 import { useEffect, useRef, useState } from 'react'
 import { NavLink, Outlet, ScrollRestoration, useLocation } from 'react-router-dom'
-import { CaretDoubleLeft, CaretDoubleRight, List, X } from '@phosphor-icons/react'
+import { ArrowsLeftRight, Buildings, CaretDoubleLeft, CaretDoubleRight, DotsThreeOutline, SquaresFour, Truck, X, type Icon } from '@phosphor-icons/react'
 import { ALL_NAV_ITEMS, NAV } from '../../lib/navigation'
 import { InstallAppBanner } from './InstallApp'
 import { SignOutButton } from './SignOutButton'
 
 const COLLAPSED_KEY = 'ba-sidebar-collapsed'
+
+/** The four screens used most, always one tap away on phones. Everything else is under "More". */
+const TABS: { to: string; label: string; icon: Icon }[] = [
+  { to: '/', label: 'Home', icon: SquaresFour },
+  { to: '/property', label: 'Godowns', icon: Buildings },
+  { to: '/transport', label: 'Transport', icon: Truck },
+  { to: '/finance', label: 'Money', icon: ArrowsLeftRight },
+]
 
 function NavList({ onNavigate, collapsed = false }: { onNavigate?: () => void; collapsed?: boolean }) {
   return (
@@ -131,19 +139,32 @@ export function AppShell() {
       <div className="flex min-w-0 flex-1 flex-col">
         {/* Phone top bar: menu, then where you are. */}
         <header className="flex shrink-0 items-center gap-2 border-b border-line bg-surface pb-2 pl-[max(0.75rem,env(safe-area-inset-left))] pr-[max(1rem,env(safe-area-inset-right))] pt-[max(0.5rem,env(safe-area-inset-top))] lg:hidden">
-          <button ref={menuButtonRef} type="button" aria-label="Open menu" aria-haspopup="dialog" aria-expanded={open} onClick={() => setOpen(true)} className="rounded-md p-2.5 hover:bg-canvas">
-            <List size={22} aria-hidden />
-          </button>
-          <div className="min-w-0 leading-tight">
+          <div className="min-w-0 py-1 pl-1 leading-tight">
             <p className="text-xs text-muted">Business Admin</p>
-            <p className="truncate text-sm font-semibold">{item?.label ?? 'Business Admin'}</p>
+            <p className="truncate text-base font-semibold">{item?.label ?? 'Business Admin'}</p>
           </div>
         </header>
         <main id="main" ref={mainRef} tabIndex={-1}
-          className="flex-1 overflow-y-auto overscroll-contain px-4 pb-[calc(6rem+env(safe-area-inset-bottom))] pt-5 outline-none sm:pt-6 md:pb-10 lg:px-8">
+          className="flex-1 overflow-y-auto overscroll-contain px-4 pb-[calc(9rem+env(safe-area-inset-bottom))] pt-5 outline-none sm:pt-6 sm:pb-[calc(6rem+env(safe-area-inset-bottom))] lg:px-8 lg:pb-10">
           <div className="mx-auto max-w-6xl"><InstallAppBanner /><Outlet /></div>
         </main>
       </div>
+
+      {/* Phone / tablet bottom bar: the app's main screens, like a native app. */}
+      <nav aria-label="Quick navigation" className="fixed inset-x-0 bottom-0 z-30 flex border-t border-line bg-surface pb-[env(safe-area-inset-bottom)] pl-[env(safe-area-inset-left)] pr-[env(safe-area-inset-right)] lg:hidden">
+        {TABS.map(({ to, label, icon: Icon }) => (
+          <NavLink key={to} to={to} end={to === '/'} className={({ isActive }) => `flex min-h-14 flex-1 flex-col items-center justify-center gap-0.5 px-1 text-xs ${isActive ? 'font-semibold text-primary' : 'text-muted'}`}>
+            {({ isActive }) => (<>
+              <span className={`flex h-7 w-14 items-center justify-center rounded-full ${isActive ? 'bg-sage-soft' : ''}`}><Icon size={22} weight={isActive ? 'fill' : 'regular'} aria-hidden /></span>
+              {label}
+            </>)}
+          </NavLink>
+        ))}
+        <button ref={menuButtonRef} type="button" aria-haspopup="dialog" aria-expanded={open} onClick={() => setOpen(true)} className="flex min-h-14 flex-1 flex-col items-center justify-center gap-0.5 px-1 text-xs text-muted">
+          <span className="flex h-7 w-14 items-center justify-center rounded-full"><DotsThreeOutline size={22} aria-hidden /></span>
+          More
+        </button>
+      </nav>
 
       {open && (
         <div className="fixed inset-0 z-40 lg:hidden" role="dialog" aria-modal="true" aria-label="Menu">

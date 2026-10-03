@@ -35,7 +35,7 @@ function Form({ loan, onClose, onSaved }: { loan?: GoldLoan; onClose: () => void
   })
 
   return (
-    <form onSubmit={onSubmit} noValidate className="grid grid-cols-1 gap-4 md:grid-cols-2">
+    <form onSubmit={onSubmit} noValidate className="grid grid-cols-2 gap-x-3 gap-y-4 md:gap-4">
       <FormField id="gl-person" label="Person name" error={errors.personName?.message}>
         <input {...register('personName')} {...fieldA11y('gl-person', errors.personName?.message)} data-autofocus autoComplete="off" className={inputClass} />
       </FormField>
@@ -71,17 +71,17 @@ function Form({ loan, onClose, onSaved }: { loan?: GoldLoan; onClose: () => void
         </FormSelect>
       </FormField>
       {status !== 'active' && (
-        <FormField id="gl-closed" label="Date loan closed" error={errors.closedDate?.message} hint="Interest stops accruing on this date." className="md:col-span-2">
+        <FormField id="gl-closed" label="Date loan closed" error={errors.closedDate?.message} hint="Interest stops accruing on this date." className="col-span-2">
           <FormDatePicker control={control} name="closedDate" {...fieldA11y('gl-closed', errors.closedDate?.message, true)} className={inputClass} />
         </FormField>
       )}
-      <div className="rounded-md bg-canvas px-3 py-2 text-xs text-muted md:col-span-2">
+      <div className="rounded-md bg-canvas px-3 py-2 text-xs text-muted col-span-2">
         Saving records the amount received in Finance as a loan received, dated the pledge date. Editing the loan later updates that entry.
       </div>
-      <FormField id="gl-notes" label="Notes (optional)" error={errors.notes?.message} className="md:col-span-2">
+      <FormField id="gl-notes" label="Notes (optional)" error={errors.notes?.message} className="col-span-2">
         <input {...register('notes')} {...fieldA11y('gl-notes', errors.notes?.message)} autoComplete="off" className={inputClass} />
       </FormField>
-      {save.isError && <p role="alert" className="rounded-md bg-danger-soft px-3 py-2 text-sm text-danger md:col-span-2">{goldSubmitError(save.error, 'gold loan')}</p>}
+      {save.isError && <p role="alert" className="rounded-md bg-danger-soft px-3 py-2 text-sm text-danger col-span-2">{goldSubmitError(save.error, 'gold loan')}</p>}
       <DialogActions>
         <button type="button" className={buttonSecondary} onClick={onClose}>Cancel</button>
         <button type="submit" className={buttonPrimary} disabled={save.isPending}>{save.isPending ? 'Saving…' : 'Save gold loan'}</button>

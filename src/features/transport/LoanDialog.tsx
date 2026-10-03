@@ -34,7 +34,7 @@ function Form({ loan, onClose, onSaved }: { loan?: VehicleLoan; onClose: () => v
   })
 
   return (
-    <form onSubmit={onSubmit} noValidate className="grid grid-cols-1 gap-4 md:grid-cols-2">
+    <form onSubmit={onSubmit} noValidate className="grid grid-cols-2 gap-x-3 gap-y-4 md:gap-4">
       <FormField id="ln-lender" label="Lender" error={errors.lender?.message}>
         <input {...register('lender')} {...fieldA11y('ln-lender', errors.lender?.message)} data-autofocus autoComplete="off" className={inputClass} />
       </FormField>
@@ -64,14 +64,14 @@ function Form({ loan, onClose, onSaved }: { loan?: VehicleLoan; onClose: () => v
           {LOAN_STATUSES.map((s) => <option key={s} value={s}>{LOAN_STATUS_LABELS[s]}</option>)}
         </FormSelect>
       </FormField>
-      <div className="rounded-md bg-canvas px-3 py-2 text-xs text-muted md:col-span-2">
+      <div className="rounded-md bg-canvas px-3 py-2 text-xs text-muted col-span-2">
         Saving records the amount received in Finance as a loan received, dated the start date. Editing the loan later updates that entry.
       </div>
-      <FormField id="ln-notes" label="Notes (optional)" error={errors.notes?.message} className="md:col-span-2">
+      <FormField id="ln-notes" label="Notes (optional)" error={errors.notes?.message} className="col-span-2">
         <input {...register('notes')} {...fieldA11y('ln-notes', errors.notes?.message)} autoComplete="off" className={inputClass} />
       </FormField>
-      {options.isError && <p role="alert" className="rounded-md bg-danger-soft px-3 py-2 text-sm text-danger md:col-span-2">Could not load vehicles. You can still save the loan without linking a vehicle.</p>}
-      {save.isError && <p role="alert" className="rounded-md bg-danger-soft px-3 py-2 text-sm text-danger md:col-span-2">{transportSubmitError(save.error, 'loan')}</p>}
+      {options.isError && <p role="alert" className="rounded-md bg-danger-soft px-3 py-2 text-sm text-danger col-span-2">Could not load vehicles. You can still save the loan without linking a vehicle.</p>}
+      {save.isError && <p role="alert" className="rounded-md bg-danger-soft px-3 py-2 text-sm text-danger col-span-2">{transportSubmitError(save.error, 'loan')}</p>}
       <DialogActions>
         <button type="button" className={buttonSecondary} onClick={onClose}>Cancel</button>
         <button type="submit" className={buttonPrimary} disabled={save.isPending}>{save.isPending ? 'Saving…' : 'Save loan'}</button>

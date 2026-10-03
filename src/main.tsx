@@ -10,6 +10,10 @@ import { initInstall } from './lib/install'
 import { registerServiceWorker } from './lib/serviceWorker'
 import './index.css'
 
+// iOS Safari ignores `user-scalable=no`, so stop pinch-zoom at the gesture itself (the app is meant to feel like an app).
+document.addEventListener('gesturestart', (e) => e.preventDefault())
+document.addEventListener('touchmove', (e) => { if (e.touches.length > 1) e.preventDefault() }, { passive: false })
+
 initInstall() // capture the browser's install event early, before the first render
 registerServiceWorker()
 

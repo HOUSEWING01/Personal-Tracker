@@ -13,7 +13,7 @@ export function AddButton({ label, onClick }: { label: string; onClick: () => vo
       </button>
       <button
         type="button" aria-label={label} title={label} onClick={onClick}
-        className="fixed bottom-[max(1.25rem,env(safe-area-inset-bottom))] right-[max(1.25rem,env(safe-area-inset-right))] z-30 flex h-14 w-14 items-center justify-center rounded-full bg-primary text-white shadow-lg hover:bg-primary-hover active:scale-95 sm:hidden"
+        className="fixed bottom-[calc(4.75rem+env(safe-area-inset-bottom))] right-[max(1.25rem,env(safe-area-inset-right))] z-30 flex h-14 w-14 items-center justify-center rounded-full bg-primary text-white shadow-lg hover:bg-primary-hover active:scale-95 sm:hidden"
       >
         <Plus size={24} weight="bold" aria-hidden />
       </button>
