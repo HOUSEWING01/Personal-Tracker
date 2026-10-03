@@ -25,6 +25,7 @@ export function ListToolbar({ searchLabel, searchValue, onSearch, activeCount = 
             className="w-full rounded-md border border-line bg-surface py-2.5 pl-9 pr-3 text-sm md:py-2"
           />
         </div>
+        {quick}
         {hasFilters && (
           <button
             type="button" aria-expanded={open} aria-controls={panelId} onClick={() => setOpen((o) => !o)}

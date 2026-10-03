@@ -214,9 +214,9 @@ export const loanFormSchema = z.object({
   emi: z.string().trim().min(1, 'Enter the monthly instalment (EMI).')
     .refine((s) => parseMoney(s) !== null, 'Enter a valid amount with up to 2 decimals.')
     .refine((s) => (parseMoney(s) ?? 1) > 0, 'EMI must be greater than zero.'),
-  tenureMonths: z.string().trim()
-    .refine((s) => s === '' || /^\d{1,3}$/.test(s), 'Enter whole months, or leave blank.')
-    .refine((s) => s === '' || (Number(s) >= 1 && Number(s) <= 600), 'Tenure must be between 1 and 600 months.'),
+  tenureMonths: z.string().trim().min(1, 'Enter the tenure in months.')
+    .refine((s) => /^\d{1,3}$/.test(s), 'Enter whole months.')
+    .refine((s) => Number(s) >= 1 && Number(s) <= 600, 'Tenure must be between 1 and 600 months.'),
   status: z.enum(LOAN_STATUSES),
   notes: text(500, 'Keep the notes under 500 characters.'),
 })

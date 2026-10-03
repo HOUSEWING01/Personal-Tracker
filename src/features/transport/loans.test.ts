@@ -1,11 +1,11 @@
 import { describe, expect, it } from 'vitest'
-import { loanEndDate } from './transportEngine'
+import { loanEmi, loanEndDate, loanInterestRate, loanTenureMonths } from './transportEngine'
 import {
   defaultLoanPaymentValues, defaultLoanValues, loanFormSchema, loanPaymentFormSchema, toLoanInput, toLoanPaymentInput,
 } from './transportForms'
 
 const loan = (over: Record<string, string> = {}) => ({
-  ...defaultLoanValues('2026-04-01'), lender: 'HDFC Bank', principal: '1500000', interestRate: '9.5', emi: '31250', ...over,
+  ...defaultLoanValues('2026-04-01'), lender: 'HDFC Bank', principal: '1500000', interestRate: '9.5', emi: '31250', tenureMonths: '60', ...over,
 })
 const messages = (r: { success: boolean; error?: { issues: { message: string }[] } }) => r.error?.issues.map((i) => i.message) ?? []
 
@@ -30,19 +30,19 @@ describe('loanEndDate', () => {
 })
 
 describe('loanFormSchema', () => {
-  it('accepts the minimum record and converts to paise', () => {
+  it('accepts a complete record and converts to paise', () => {
     const r = loanFormSchema.safeParse(loan())
     expect(r.success).toBe(true)
     if (r.success) {
       const i = toLoanInput(r.data)
       expect(i).toEqual({
         vehicleId: null, lender: 'HDFC Bank', principalPaise: 150_000_000, startDate: '2026-04-01',
-        interestRate: 9.5, emiPaise: 3_125_000, tenureMonths: null, status: 'active', notes: null,
+        interestRate: 9.5, emiPaise: 3_125_000, tenureMonths: 60, status: 'active', notes: null,
       })
     }
   })
-  it('keeps an optional vehicle, tenure and notes', () => {
-    const r = loanFormSchema.safeParse(loan({ vehicleId: 'v-1', tenureMonths: '60', notes: ' first loan ' }))
+  it('keeps an optional vehicle and notes', () => {
+    const r = loanFormSchema.safeParse(loan({ vehicleId: 'v-1', notes: ' first loan ' }))
     expect(r.success).toBe(true)
     if (r.success) {
       const i = toLoanInput(r.data)
@@ -51,12 +51,13 @@ describe('loanFormSchema', () => {
       expect(i.notes).toBe('first loan')
     }
   })
-  it('requires lender, amount received, EMI and the interest rate', () => {
-    const m = messages(loanFormSchema.safeParse(loan({ lender: ' ', principal: '', emi: '', interestRate: '' })))
+  it('requires lender, amount received, EMI, tenure and the interest rate', () => {
+    const m = messages(loanFormSchema.safeParse(loan({ lender: ' ', principal: '', emi: '', interestRate: '', tenureMonths: '' })))
     expect(m).toContain('Enter the lender.')
     expect(m).toContain('Enter the amount received.')
     expect(m).toContain('Enter the monthly instalment (EMI).')
     expect(m).toContain('Enter the interest rate (0 if none).')
+    expect(m).toContain('Enter the tenure in months.')
   })
   it('allows an interest rate of 0 but not above 100 or with 3 decimals', () => {
     expect(loanFormSchema.safeParse(loan({ interestRate: '0' })).success).toBe(true)
@@ -96,5 +97,28 @@ describe('loanPaymentFormSchema', () => {
   it('pre-fills a new payment with today and the EMI', () => {
     expect(defaultLoanPaymentValues('2026-05-01', 3_125_000)).toEqual({ paymentDate: '2026-05-01', amount: '31250.00', notes: '' })
     expect(defaultLoanPaymentValues('2026-05-01', 0).amount).toBe('')
+  })
+})
+
+describe('linked loan figures', () => {
+  const P = 100_000_000 // Rs 10,00,000 in paise
+  it('rate, EMI and tenure agree with each other', () => {
+    const emi = loanEmi(P, 9, 48) as number
+    expect(emi / 100).toBeCloseTo(24885.0, -1)
+    expect(loanInterestRate(P, emi, 48)).toBeCloseTo(9, 1)
+    expect(loanTenureMonths(P, 9, emi)).toBe(48)
+  })
+  it('handles a zero rate', () => {
+    expect(loanEmi(P, 0, 50)).toBe(2_000_000)
+    expect(loanTenureMonths(P, 0, 2_000_000)).toBe(50)
+  })
+  it('rounds the tenure up and refuses an EMI that does not cover the interest', () => {
+    expect(loanTenureMonths(P, 0, 3_000_000)).toBe(34)
+    expect(loanTenureMonths(P, 12, 500_000)).toBeNull() // interest alone is Rs 10,000 a month
+  })
+  it('returns null for missing inputs', () => {
+    expect(loanEmi(0, 9, 48)).toBeNull()
+    expect(loanEmi(P, 9, 0)).toBeNull()
+    expect(loanTenureMonths(P, 9, 0)).toBeNull()
   })
 })

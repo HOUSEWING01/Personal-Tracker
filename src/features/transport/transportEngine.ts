@@ -101,3 +101,25 @@ export function loanInterestRate(principalPaise: number, emiPaise: number, month
   const yearly = ((lo + hi) / 2) * 12 * 100
   return Math.round(yearly * 100) / 100
 }
+
+/** Monthly instalment (paise) that repays `principalPaise` over `months` at `yearlyRate` % (reducing-balance EMI formula). */
+export function loanEmi(principalPaise: number, yearlyRate: number, months: number): number | null {
+  if (!(principalPaise > 0) || !Number.isInteger(months) || months <= 0 || !(yearlyRate >= 0)) return null
+  const r = yearlyRate / 12 / 100
+  if (r === 0) return Math.round(principalPaise / months)
+  const f = (1 + r) ** months
+  return Math.round((principalPaise * r * f) / (f - 1))
+}
+
+/**
+ * Whole months needed to repay `principalPaise` with `emiPaise` a month at `yearlyRate` %, rounded up.
+ * Null when the instalment does not even cover the interest, or the answer is outside 1 to 600 months.
+ */
+export function loanTenureMonths(principalPaise: number, yearlyRate: number, emiPaise: number): number | null {
+  if (!(principalPaise > 0) || !(emiPaise > 0) || !(yearlyRate >= 0)) return null
+  const r = yearlyRate / 12 / 100
+  const exact = r === 0 ? principalPaise / emiPaise : -Math.log(1 - (principalPaise * r) / emiPaise) / Math.log(1 + r)
+  if (!Number.isFinite(exact) || exact <= 0) return null
+  const months = Math.ceil(exact - 0.01)
+  return months >= 1 && months <= 600 ? months : null
+}
