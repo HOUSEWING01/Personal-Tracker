@@ -12,6 +12,7 @@ export function transportSubmitError(e: unknown, what: string): string {
   if (msg.includes('driver is not active')) return 'This driver is not active. Choose an active driver, or make them active first.'
   if (msg.includes('trip belongs to a different vehicle')) return 'The chosen trip belongs to a different vehicle. Choose a trip for this vehicle, or leave the trip blank.'
   if (msg.includes('trip has fuel or toll entries')) return 'This trip has fuel or toll entries, so its vehicle cannot be changed.'
+  if (msg.includes('next due date is before')) return 'The next due date cannot be before the date of this entry.'
   if (msg.includes('loan is closed')) return 'This loan is closed. Set it back to Active to record a new payment.'
   if (msg.includes('payment is before the loan start date')) return 'The payment date is before the loan start date.'
   if (msg.includes('loan has payments before the start date')) return 'This loan already has payments dated before that start date. Choose an earlier start date.'

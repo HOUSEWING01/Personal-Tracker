@@ -1,9 +1,9 @@
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import {
-  createCustomer, createDriver, getTripCosts, listCustomers, listDrivers, listFuelLogs, listLoanPayments, listLoans, listTolls, listVehicleProfitTotals, listTripChoices, listTripOptions, listTrips, listVehicles,
-  saveFuelLog, saveLoanPayment, saveToll, saveTrip, saveVehicle, saveVehicleLoan,
+  createCustomer, createDriver, getTripCosts, listCustomers, listDrivers, listFuelLogs, listLoanPayments, listLoans, listMaintenance, listMaintenanceDue, listTolls, listVehicleProfitTotals, listTripChoices, listTripOptions, listTrips, listVehicles,
+  saveFuelLog, saveLoanPayment, saveMaintenance, saveToll, saveTrip, saveVehicle, saveVehicleLoan,
   updateCustomer, updateDriver,
-  type CustomerInput, type DriverFilters, type DriverInput, type FuelFilters, type FuelInput, type LoanFilters, type LoanInput, type LoanPaymentInput, type TollFilters, type TollInput,
+  type CustomerInput, type DriverFilters, type DriverInput, type FuelFilters, type FuelInput, type LoanFilters, type LoanInput, type LoanPaymentInput, type MaintenanceFilters, type MaintenanceInput, type TollFilters, type TollInput,
   type TripFilters, type TripInput, type VehicleFilters, type VehicleInput,
 } from '../../services/transportService'
 
@@ -128,3 +128,22 @@ export function useSaveLoanPayment(loanId: string, paymentId?: string) {
 
 export const useVehicleProfit = (from: string, to: string) =>
   useQuery({ queryKey: ['vehicle-profit', from, to], queryFn: () => listVehicleProfitTotals(from, to) })
+
+export const useMaintenance = (f: MaintenanceFilters, page: number) =>
+  useQuery({ queryKey: ['maintenance', f, page], queryFn: () => listMaintenance(f, { page, pageSize: TRANSPORT_PAGE_SIZE }), placeholderData: keepPreviousData })
+export const useMaintenanceDue = () => useQuery({ queryKey: ['maintenance-due'], queryFn: listMaintenanceDue })
+/** Maintenance posts an expense and changes vehicle profit and the due list, so refresh those and the finance screens. */
+export function useSaveMaintenance(id?: string) {
+  const qc = useQueryClient()
+  return useMutation({
+    meta: { success: id ? 'Maintenance entry updated' : 'Maintenance entry added' },
+    mutationFn: (m: MaintenanceInput) => saveMaintenance(id, m),
+    onSuccess: () => Promise.all([
+      qc.invalidateQueries({ queryKey: ['maintenance'] }),
+      qc.invalidateQueries({ queryKey: ['maintenance-due'] }),
+      qc.invalidateQueries({ queryKey: ['transactions'] }),
+      qc.invalidateQueries({ queryKey: ['finance-summary'] }),
+      qc.invalidateQueries({ queryKey: ['vehicle-profit'] }),
+    ]),
+  })
+}

@@ -141,5 +141,35 @@ export interface VehicleProfitTotals {
   driverPaise: Paise
   fuelPaise: Paise
   tollPaise: Paise
+  maintenancePaise: Paise
   loanRepaidPaise: Paise
+}
+
+export const MAINTENANCE_KINDS = ['service', 'repair', 'tyres', 'battery', 'insurance', 'permit', 'other'] as const
+export type MaintenanceKind = (typeof MAINTENANCE_KINDS)[number]
+
+/** One maintenance expense for a vehicle. It posts to Finance as an expense, like fuel. */
+export interface MaintenanceLog {
+  id: string
+  vehicleId: string
+  vehicleName: string
+  vehicleRegistration: string
+  serviceDate: string
+  kind: MaintenanceKind
+  vendor: string | null
+  amountPaise: Paise
+  odometerKm: number | null
+  nextDueDate: string | null
+  notes: string | null
+}
+
+/** The latest entry of one kind for one active vehicle that has a next due date (from `maintenance_due`). */
+export interface MaintenanceDue {
+  id: string
+  vehicleId: string
+  vehicleName: string
+  vehicleRegistration: string
+  kind: MaintenanceKind
+  serviceDate: string
+  nextDueDate: string
 }

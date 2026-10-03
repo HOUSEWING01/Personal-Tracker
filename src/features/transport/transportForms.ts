@@ -1,6 +1,6 @@
 import { z } from 'zod'
 import { isValidISODate } from '../../lib/dates'
-import { LOAN_STATUSES, TRIP_STATUSES, VEHICLE_STATUSES } from '../../types/transport'
+import { LOAN_STATUSES, MAINTENANCE_KINDS, TRIP_STATUSES, VEHICLE_STATUSES } from '../../types/transport'
 import { parseMoney } from '../property/propertyForms'
 import { fuelTotalPaise, normalizeRegistration } from './transportEngine'
 
@@ -193,6 +193,34 @@ export type TollFormValues = z.infer<typeof tollFormSchema>
 export const defaultTollValues = (todayISO = ''): TollFormValues => ({ tripId: '', tollDate: todayISO, amount: '', location: '', notes: '' })
 export function toTollInput(v: TollFormValues) {
   return { tripId: v.tripId, tollDate: v.tollDate, amountPaise: parseMoney(v.amount) ?? 0, location: v.location.trim() || null, notes: v.notes.trim() || null }
+}
+
+// ---------- vehicle maintenance ----------
+export const maintenanceFormSchema = z.object({
+  vehicleId: z.string().min(1, 'Choose a vehicle.'),
+  serviceDate: z.string().refine(isValidISODate, 'Enter the date.'),
+  kind: z.enum(MAINTENANCE_KINDS),
+  vendor: text(100, 'Keep the garage or vendor under 100 characters.'),
+  amount: z.string().trim().min(1, 'Enter the amount.')
+    .refine((s) => parseMoney(s) !== null, 'Enter a valid amount with up to 2 decimals.')
+    .refine((s) => (parseMoney(s) ?? 1) > 0, 'Amount must be greater than zero.'),
+  odometerKm: z.string().trim().refine((s) => s === '' || /^\d{1,9}$/.test(s), 'Enter whole kilometres, or leave blank.'),
+  nextDueDate: z.string().refine((s) => s === '' || isValidISODate(s), 'Enter a valid next due date, or leave blank.'),
+  notes: text(500, 'Keep the notes under 500 characters.'),
+}).superRefine((v, ctx) => {
+  if (v.nextDueDate && isValidISODate(v.nextDueDate) && isValidISODate(v.serviceDate) && v.nextDueDate < v.serviceDate)
+    ctx.addIssue({ code: 'custom', path: ['nextDueDate'], message: 'The next due date cannot be before the date of this entry.' })
+})
+export type MaintenanceFormValues = z.infer<typeof maintenanceFormSchema>
+export const defaultMaintenanceValues = (todayISO = ''): MaintenanceFormValues => ({
+  vehicleId: '', serviceDate: todayISO, kind: 'service', vendor: '', amount: '', odometerKm: '', nextDueDate: '', notes: '',
+})
+export function toMaintenanceInput(v: MaintenanceFormValues) {
+  return {
+    vehicleId: v.vehicleId, serviceDate: v.serviceDate, kind: v.kind, vendor: v.vendor.trim() || null,
+    amountPaise: parseMoney(v.amount) ?? 0, odometerKm: v.odometerKm.trim() === '' ? null : Number(v.odometerKm),
+    nextDueDate: v.nextDueDate || null, notes: v.notes.trim() || null,
+  }
 }
 
 // ---------- vehicle loan ----------

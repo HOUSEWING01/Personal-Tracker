@@ -29,7 +29,7 @@ interface Props<T> {
   qText: string
   onSearch: (s: string) => void
   searchLabel: string
-  status?: { value: string; options: { value: string; label: string }[]; onChange: (s: string) => void }
+  status?: { label?: string; value: string; options: { value: string; label: string }[]; onChange: (s: string) => void }
   /** Extra filter controls (label + Select) shown in the toolbar next to Status, and how many of them are active. */
   filters?: ReactNode
   filterCount?: number
@@ -119,7 +119,7 @@ export function MasterList<T>(p: Props<T>) {
             {hasFilters ? (
               <>
                 {p.status && (
-                  <label className={`${filterLabel} col-span-2 md:col-span-1`}>Status
+                  <label className={`${filterLabel} col-span-2 md:col-span-1`}>{p.status.label ?? 'Status'}
                     <Select value={p.status.value} onChange={(v) => p.status?.onChange(v)} className={filterField}>
                       <option value="all">All</option>
                       {p.status.options.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}

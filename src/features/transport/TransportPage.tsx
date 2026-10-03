@@ -4,6 +4,7 @@ import { useUrlState } from '../../hooks/useUrlState'
 import { CustomersTab } from './CustomersTab'
 import { DriversTab } from './DriversTab'
 import { LoansTab } from './LoansTab'
+import { MaintenanceTab } from './MaintenanceTab'
 import { ProfitTab } from './ProfitTab'
 import { TripsTab } from './TripsTab'
 import { TRANSPORT_URL_DEFAULTS } from './useListControls'
@@ -12,6 +13,7 @@ import { VehiclesTab } from './VehiclesTab'
 const TABS = [
   { id: 'trips', label: 'Trips' },
   { id: 'loans', label: 'Loans' },
+  { id: 'maintenance', label: 'Maintenance' },
   { id: 'profit', label: 'Profit' },
   { id: 'vehicles', label: 'Vehicles' },
   { id: 'drivers', label: 'Drivers' },
@@ -32,6 +34,7 @@ export function TransportPage() {
       <div role="tabpanel" id="tr-panel" tabIndex={0} aria-labelledby={`tr-tab-${tab}`}>
         {tab === 'trips' && <TripsTab />}
         {tab === 'loans' && <LoansTab />}
+        {tab === 'maintenance' && <MaintenanceTab />}
         {tab === 'profit' && <ProfitTab />}
         {tab === 'vehicles' && <VehiclesTab />}
         {tab === 'drivers' && <DriversTab />}

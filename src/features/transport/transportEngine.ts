@@ -1,4 +1,5 @@
 import type { Paise } from '../../lib/money'
+import { daysBetween } from '../../services/goldInterest'
 import type { Vehicle, VehicleProfitTotals } from '../../types/transport'
 
 /**
@@ -61,28 +62,50 @@ export function loanEndDate(startDate: string, tenureMonths: number | null): str
   return `${String(year).padStart(4, '0')}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`
 }
 
+type ProfitParts = Pick<VehicleProfitTotals, 'revenuePaise' | 'driverPaise' | 'fuelPaise' | 'tollPaise' | 'maintenancePaise'>
+
 /**
- * Vehicle operating profit = revenue - driver payments - fuel - tolls (all cash-basis, from the ledger).
+ * Vehicle operating profit = revenue - driver payments - fuel - tolls - maintenance (all cash-basis, from the ledger).
  * Loan repayments are NOT part of it (D-021). Fuel here is ALL fuel for the vehicle, including fuel not linked to a trip.
+ * Maintenance is a vehicle-level cost: it is not part of any single trip's profit.
  */
-export function vehicleOperatingProfitPaise(t: Pick<VehicleProfitTotals, 'revenuePaise' | 'driverPaise' | 'fuelPaise' | 'tollPaise'>): Paise {
-  return t.revenuePaise - t.driverPaise - t.fuelPaise - t.tollPaise
+export function vehicleOperatingProfitPaise(t: ProfitParts): Paise {
+  return t.revenuePaise - t.driverPaise - t.fuelPaise - t.tollPaise - t.maintenancePaise
 }
 
 /**
  * Cash left after loan repayments = operating profit - loan repayments (D-021). Repayments include the principal part
  * (interest is not split, D-009), so this is a cash view, not an accounting profit.
  */
-export function vehicleAfterFinancingPaise(t: Pick<VehicleProfitTotals, 'revenuePaise' | 'driverPaise' | 'fuelPaise' | 'tollPaise' | 'loanRepaidPaise'>): Paise {
+export function vehicleAfterFinancingPaise(t: ProfitParts & Pick<VehicleProfitTotals, 'loanRepaidPaise'>): Paise {
   return vehicleOperatingProfitPaise(t) - t.loanRepaidPaise
 }
 
 /** Sum of several vehicles' totals, for the "All vehicles" row. */
-export function sumProfitTotals(rows: VehicleProfitTotals[]): Pick<VehicleProfitTotals, 'revenuePaise' | 'driverPaise' | 'fuelPaise' | 'tollPaise' | 'loanRepaidPaise'> {
+export function sumProfitTotals(rows: VehicleProfitTotals[]): ProfitParts & Pick<VehicleProfitTotals, 'loanRepaidPaise'> {
   return rows.reduce((a, r) => ({
     revenuePaise: a.revenuePaise + r.revenuePaise, driverPaise: a.driverPaise + r.driverPaise, fuelPaise: a.fuelPaise + r.fuelPaise,
-    tollPaise: a.tollPaise + r.tollPaise, loanRepaidPaise: a.loanRepaidPaise + r.loanRepaidPaise,
-  }), { revenuePaise: 0, driverPaise: 0, fuelPaise: 0, tollPaise: 0, loanRepaidPaise: 0 })
+    tollPaise: a.tollPaise + r.tollPaise, maintenancePaise: a.maintenancePaise + r.maintenancePaise, loanRepaidPaise: a.loanRepaidPaise + r.loanRepaidPaise,
+  }), { revenuePaise: 0, driverPaise: 0, fuelPaise: 0, tollPaise: 0, maintenancePaise: 0, loanRepaidPaise: 0 })
+}
+
+/** A maintenance item counts as "due soon" this many days before its due date. */
+export const MAINTENANCE_DUE_SOON_DAYS = 30
+
+export type MaintenanceDueState = { kind: 'overdue' | 'soon'; days: number } | null
+
+/** Overdue = due date before today; soon = within MAINTENANCE_DUE_SOON_DAYS (today counts as soon). Null = nothing to flag. */
+export function maintenanceDueState(nextDueDate: string | null, today: string): MaintenanceDueState {
+  if (!nextDueDate) return null
+  const d = daysBetween(today, nextDueDate)
+  if (d < 0) return { kind: 'overdue', days: -d }
+  if (d <= MAINTENANCE_DUE_SOON_DAYS) return { kind: 'soon', days: d }
+  return null
+}
+
+export function maintenanceDueLabel(s: NonNullable<MaintenanceDueState>): string {
+  if (s.kind === 'overdue') return `Overdue by ${s.days} ${s.days === 1 ? 'day' : 'days'}`
+  return s.days === 0 ? 'Due today' : `Due in ${s.days} ${s.days === 1 ? 'day' : 'days'}`
 }
 
 /**

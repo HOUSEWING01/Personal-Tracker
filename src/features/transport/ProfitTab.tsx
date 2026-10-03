@@ -27,6 +27,7 @@ export function ProfitTab() {
     { label: 'Driver payments', value: (r) => r.driverPaise, sign: '−' },
     { label: 'Fuel', value: (r) => r.fuelPaise, sign: '−' },
     { label: 'Tolls', value: (r) => r.tollPaise, sign: '−' },
+    { label: 'Maintenance', value: (r) => r.maintenancePaise, sign: '−' },
     { label: 'Operating profit', value: vehicleOperatingProfitPaise, strong: true },
     { label: 'Loan repayments', value: (r) => r.loanRepaidPaise, sign: '−' },
     { label: 'After loan repayments', value: vehicleAfterFinancingPaise, strong: true },
@@ -41,8 +42,8 @@ export function ProfitTab() {
         <button type="button" className={buttonSecondary} onClick={() => update({ from: '', to: '' })}>All time</button>
       </form>
       <p className="mb-4 text-xs text-muted">
-        Cash basis, from the ledger: a trip counts when completed, fuel and tolls when paid. Operating profit excludes loan repayments.
-        Repayments include interest and principal, so the last line is cash left, not accounting profit. Fuel includes fuel not linked to a trip.
+        Cash basis, from the ledger: a trip counts when completed, fuel, tolls and maintenance when paid. Operating profit excludes loan repayments.
+        Repayments include interest and principal, so the last line is cash left, not accounting profit. Fuel includes fuel not linked to a trip, and maintenance is counted per vehicle, not per trip.
       </p>
 
       {profit.isError ? (

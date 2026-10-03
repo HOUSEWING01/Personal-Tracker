@@ -1,7 +1,7 @@
 import { supabase } from '../lib/supabase'
 import { fromPaise, toPaise } from '../lib/money'
 import type {
-  Customer, Driver, DriverStatus, FuelLog, LoanPayment, LoanStatus, Toll, Trip, TripChoice, TripStatus, Vehicle, VehicleLoan, VehicleProfitTotals, VehicleStatus,
+  Customer, Driver, DriverStatus, FuelLog, LoanPayment, LoanStatus, MaintenanceDue, MaintenanceKind, MaintenanceLog, Toll, Trip, TripChoice, TripStatus, Vehicle, VehicleLoan, VehicleProfitTotals, VehicleStatus,
 } from '../types/transport'
 
 type Num = number | string
@@ -399,7 +399,7 @@ export async function saveLoanPayment(loanId: string, id: string | undefined, p:
 }
 
 // ---------- transport profit (D-021) ----------
-interface ProfitRow { vehicle_id: string | null; revenue: Num; driver: Num; fuel: Num; toll: Num; loan_repaid: Num }
+interface ProfitRow { vehicle_id: string | null; revenue: Num; driver: Num; fuel: Num; toll: Num; maintenance: Num; loan_repaid: Num }
 
 /** Raw per-vehicle sums for a period (either end may be empty = unbounded). Profit is computed in transportEngine. */
 export async function listVehicleProfitTotals(from?: string, to?: string): Promise<VehicleProfitTotals[]> {
@@ -415,7 +415,62 @@ export async function listVehicleProfitTotals(from?: string, to?: string): Promi
     return {
       vehicleId: r.vehicle_id, vehicleName: r.vehicle_id ? (veh?.name ?? 'Unknown vehicle') : 'Loans not linked to a vehicle',
       vehicleRegistration: veh?.registration_number ?? null,
-      revenuePaise: toPaise(r.revenue), driverPaise: toPaise(r.driver), fuelPaise: toPaise(r.fuel), tollPaise: toPaise(r.toll), loanRepaidPaise: toPaise(r.loan_repaid),
+      revenuePaise: toPaise(r.revenue), driverPaise: toPaise(r.driver), fuelPaise: toPaise(r.fuel), tollPaise: toPaise(r.toll), maintenancePaise: toPaise(r.maintenance), loanRepaidPaise: toPaise(r.loan_repaid),
     }
   }).sort((a, b) => a.vehicleName.localeCompare(b.vehicleName))
+}
+
+// ---------- vehicle maintenance ----------
+interface MaintenanceRow {
+  id: string; vehicle_id: string; service_date: string; kind: MaintenanceKind; vendor: string | null; amount: Num
+  odometer_km: number | null; next_due_date: string | null; notes: string | null
+  vehicles: { name: string; registration_number: string } | null
+}
+const MAINTENANCE_SELECT = '*, vehicles(name, registration_number)'
+const toMaintenance = (r: MaintenanceRow): MaintenanceLog => ({
+  id: r.id, vehicleId: r.vehicle_id, vehicleName: r.vehicles?.name ?? '', vehicleRegistration: r.vehicles?.registration_number ?? '',
+  serviceDate: r.service_date, kind: r.kind, vendor: r.vendor, amountPaise: toPaise(r.amount), odometerKm: r.odometer_km,
+  nextDueDate: r.next_due_date, notes: r.notes,
+})
+
+export interface MaintenanceFilters { vehicleId?: string; kind?: MaintenanceKind; q?: string }
+export async function listMaintenance(f: MaintenanceFilters, o: PageOpts): Promise<Paged<MaintenanceLog>> {
+  let query = supabase.from('vehicle_maintenance').select(MAINTENANCE_SELECT, { count: 'exact' })
+  if (f.vehicleId) query = query.eq('vehicle_id', f.vehicleId)
+  if (f.kind) query = query.eq('kind', f.kind)
+  const q = searchTerm(f.q ?? '')
+  if (q) query = query.or(orLike(['vendor', 'notes'], q))
+  const { data, error, count } = await query
+    .order('service_date', { ascending: false }).order('created_at', { ascending: false }).range(...range(o))
+  if (error) throw error
+  return { rows: (data as unknown as MaintenanceRow[]).map(toMaintenance), total: count ?? 0 }
+}
+
+export interface MaintenanceInput {
+  vehicleId: string; serviceDate: string; kind: MaintenanceKind; vendor: string | null; amountPaise: number
+  odometerKm: number | null; nextDueDate: string | null; notes: string | null
+}
+/** Creates (no id) or edits a maintenance entry; the database function keeps its expense entry in the ledger in step (migration 0023). */
+export async function saveMaintenance(id: string | undefined, m: MaintenanceInput): Promise<string> {
+  const { data, error } = await supabase.rpc('save_maintenance', {
+    p_vehicle_id: m.vehicleId, p_service_date: m.serviceDate, p_kind: m.kind, p_vendor: m.vendor, p_amount: fromPaise(m.amountPaise),
+    p_odometer_km: m.odometerKm, p_next_due_date: m.nextDueDate, p_notes: m.notes, p_id: id ?? null,
+  })
+  if (error) throw error
+  return data as string
+}
+
+/** Items with a next due date, soonest first. The overdue / soon wording is worked out in transportEngine. */
+export async function listMaintenanceDue(): Promise<MaintenanceDue[]> {
+  const [d, v] = await Promise.all([
+    supabase.from('maintenance_due').select('id, vehicle_id, kind, service_date, next_due_date').order('next_due_date').limit(500),
+    supabase.from('vehicles').select('id, name, registration_number').limit(2000),
+  ])
+  if (d.error) throw d.error
+  if (v.error) throw v.error
+  const names = new Map((v.data as { id: string; name: string; registration_number: string }[]).map((r) => [r.id, r]))
+  return (d.data as { id: string; vehicle_id: string; kind: MaintenanceKind; service_date: string; next_due_date: string }[]).map((r) => ({
+    id: r.id, vehicleId: r.vehicle_id, vehicleName: names.get(r.vehicle_id)?.name ?? '', vehicleRegistration: names.get(r.vehicle_id)?.registration_number ?? '',
+    kind: r.kind, serviceDate: r.service_date, nextDueDate: r.next_due_date,
+  }))
 }

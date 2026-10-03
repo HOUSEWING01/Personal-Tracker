@@ -1,7 +1,6 @@
 import type { ReactNode } from 'react'
 import { Link } from 'react-router-dom'
 import { PageHeader } from '../../components/ui/PageHeader'
-import { StatTile as Tile, statGrid } from '../../components/ui/StatTile'
 import { currentMonthRangeIST, formatDate, todayIST } from '../../lib/dates'
 import { formatINR } from '../../lib/money'
 import { useUrlState } from '../../hooks/useUrlState'
@@ -13,22 +12,40 @@ import { useActiveGoldLoans, useDashboardCounts } from './hooks'
 
 const DEFAULTS = { period: 'month' }
 
-function Section({ title, to, linkLabel, loading, error, onRetry, children }: {
-  title: string; to: string; linkLabel: string; loading: boolean; error: boolean; onRetry: () => void; children: ReactNode
-}) {
+/** Title row of a dashboard card: heading on the left, link to the module on the right. */
+function CardHead({ id, title, to, linkLabel }: { id: string; title: string; to: string; linkLabel: string }) {
   return (
-    <section className="mt-8" aria-labelledby={`dash-${to}`} aria-busy={loading}>
-      <div className="mb-3 flex items-baseline justify-between gap-3">
-        <h2 id={`dash-${to}`} className="text-sm font-semibold">{title}</h2>
-        <Link to={to} className="text-sm text-primary underline-offset-2 hover:underline">{linkLabel}</Link>
-      </div>
-      {error ? (
-        <div role="alert" className="rounded-md border border-line bg-surface px-4 py-4 text-sm">
-          Could not load this section. <button type="button" className="text-primary underline" onClick={onRetry}>Try again</button>
-        </div>
-      ) : (
-        <dl className={statGrid}>{children}</dl>
-      )}
+    <div className="flex items-baseline justify-between gap-3">
+      <h2 id={id} className="text-sm font-semibold">{title}</h2>
+      <Link to={to} className="shrink-0 text-xs text-primary underline-offset-2 hover:underline">{linkLabel}</Link>
+    </div>
+  )
+}
+
+const retry = (onRetry: () => void) => (
+  <div role="alert" className="mt-2 text-sm">Could not load this section. <button type="button" className="text-primary underline" onClick={onRetry}>Try again</button></div>
+)
+
+/** A small label + value for use inside a card's `<dl>`. Values wrap instead of clipping. */
+function Stat({ label, value, hint, negative, big }: { label: string; value: ReactNode; hint?: string; negative?: boolean; big?: boolean }) {
+  return (
+    <div className="min-w-0">
+      <dt className="text-xs text-muted">{label}</dt>
+      <dd className={`mt-0.5 break-words font-semibold tabular-nums ${big ? 'text-2xl' : 'text-sm'} ${negative ? 'text-danger' : 'text-ink'}`}>{value}</dd>
+      {hint && <div className="text-[11px] leading-snug text-muted">{hint}</div>}
+    </div>
+  )
+}
+
+/** One module as one compact card: a header, then its figures in a 2 or 3 column grid. */
+function Card({ title, to, linkLabel, loading, error, onRetry, cols = 2, children }: {
+  title: string; to: string; linkLabel: string; loading: boolean; error: boolean; onRetry: () => void; cols?: 2 | 3; children: ReactNode
+}) {
+  const id = `dash-${to}`
+  return (
+    <section className="mt-3 rounded-lg border border-line bg-surface p-3" aria-labelledby={id} aria-busy={loading}>
+      <CardHead id={id} title={title} to={to} linkLabel={linkLabel} />
+      {error ? retry(onRetry) : <dl className={`mt-2.5 grid gap-x-3 gap-y-3 ${cols === 3 ? 'grid-cols-3' : 'grid-cols-2'}`}>{children}</dl>}
     </section>
   )
 }
@@ -46,11 +63,14 @@ export function DashboardPage() {
   const counts = useDashboardCounts(today, month.from, month.to)
   const all = useFinanceSummary(range, true)
   const transport = useFinanceSummary({ ...range, module: 'transport' }, true)
+  // Shown beside the period switch whichever period is chosen. On "All time" it is the same query as `all`, so it is shared.
+  const allTime = useFinanceSummary({}, true)
   const gold = useActiveGoldLoans()
   const g = gold.data ? summarizeGold(gold.data, today) : undefined
   const c = counts.data
   const f = all.data
   const t = transport.data
+  const lifetimeProfit = allTime.data?.netProfit
   const receivables = c ? receivablesPaise(c.rentOutstandingPaise, c.sheetOutstandingPaise) : undefined
   const money = (v?: number) => (v === undefined ? dash : formatINR(v))
   const num = (v?: number) => (v === undefined ? dash : String(v))
@@ -67,65 +87,82 @@ export function DashboardPage() {
         title="Dashboard"
         description="Money and operations across every module."
         actions={
-          <div role="group" aria-label="Period for money figures" className="flex rounded-md border border-line bg-surface p-0.5 text-sm">
-            {([['month', 'This month'], ['all', 'All time']] as const).map(([id, label]) => (
-              <button
-                key={id} type="button" aria-pressed={period === id} onClick={() => update({ period: id })}
-                className={`rounded px-3 py-1.5 font-medium ${period === id ? 'bg-primary text-surface' : 'text-muted hover:text-ink'}`}
-              >{label}</button>
-            ))}
+          <div className="flex w-full items-center justify-between gap-3 sm:w-auto sm:gap-5">
+            <div role="group" aria-label="Period for money figures" className="flex rounded-md border border-line bg-surface p-0.5 text-sm">
+              {([['month', 'This month'], ['all', 'All time']] as const).map(([id, label]) => (
+                <button
+                  key={id} type="button" aria-pressed={period === id} onClick={() => update({ period: id })}
+                  className={`rounded px-3 py-1.5 font-medium ${period === id ? 'bg-primary text-surface' : 'text-muted hover:text-ink'}`}
+                >{label}</button>
+              ))}
+            </div>
+            <div className="text-right" aria-live="polite">
+              <div className="text-xs text-muted">All-time profit</div>
+              <div className={`text-sm font-semibold tabular-nums ${(lifetimeProfit ?? 0) < 0 ? 'text-danger' : ''}`}>
+                {lifetimeProfit === undefined ? dash : `${lifetimeProfit < 0 ? '−' : ''}${formatINR(Math.abs(lifetimeProfit))}`}
+              </div>
+            </div>
           </div>
         }
       />
 
       {attention.length > 0 && (
-        <section aria-labelledby="dash-attention" className="rounded-md bg-gold-soft px-4 py-3">
-          <h2 id="dash-attention" className="text-sm font-semibold text-primary">Needs attention</h2>
+        <section aria-labelledby="dash-attention" className="rounded-md bg-gold-soft px-3 py-2">
+          <h2 id="dash-attention" className="text-xs font-semibold uppercase tracking-wide text-primary">Needs attention</h2>
           <ul className="mt-1 flex flex-col gap-0.5 text-sm text-primary">
             {attention.map((a) => (<li key={a.key}><Link to={a.to} className="underline-offset-2 hover:underline">{a.text}</Link></li>))}
           </ul>
         </section>
       )}
 
-      <Section title={`Financial · ${periodLabel}`} to="/finance" linkLabel="All transactions" loading={all.isLoading} error={all.isError} onRetry={() => void all.refetch()}>
-        <Tile label="Revenue" value={money(f?.revenue)} />
-        <Tile label="Expenses" value={money(f?.expenses)} />
-        <Tile label="Net profit" value={money(f?.netProfit)} negative={(f?.netProfit ?? 0) < 0} />
-        <Tile label="Outstanding receivables" value={money(receivables)} hint="Unpaid rent and sheet rent, all time" />
-        <Tile label="Loans received" value={money(f?.loanReceived)} hint={periodLabel} />
-        <Tile label="Loan repayments" value={money(f?.loanRepayments)} hint="Includes interest" />
-      </Section>
+      <section className="mt-3 rounded-lg border border-line bg-surface p-3" aria-labelledby="dash-finance" aria-busy={all.isLoading}>
+        <CardHead id="dash-finance" title={`Financial · ${periodLabel}`} to="/finance" linkLabel="All transactions" />
+        {all.isError ? retry(() => void all.refetch()) : (
+          <dl className="mt-2.5">
+            <Stat big label="Net profit" value={money(f?.netProfit)} negative={(f?.netProfit ?? 0) < 0} />
+            <div className="mt-3 grid grid-cols-3 gap-x-3 border-t border-line pt-3">
+              <Stat label="Revenue" value={money(f?.revenue)} />
+              <Stat label="Expenses" value={money(f?.expenses)} />
+              <Stat label="Receivables" value={money(receivables)} hint="Unpaid rent, all time" />
+            </div>
+            <div className="mt-3 grid grid-cols-2 gap-x-3 border-t border-line pt-3">
+              <Stat label="Loans received" value={money(f?.loanReceived)} />
+              <Stat label="Loan repayments" value={money(f?.loanRepayments)} hint="Includes interest" />
+            </div>
+          </dl>
+        )}
+      </section>
 
-      <Section title="Godowns" to="/property" linkLabel="Open godowns" loading={counts.isLoading} error={counts.isError} onRetry={() => void counts.refetch()}>
-        <Tile label="Godowns" value={num(c?.activeProperties)} />
-        <Tile label="Occupied" value={num(c?.occupiedProperties)} />
-        <Tile label="Rent outstanding" value={money(c?.rentOutstandingPaise)} />
-      </Section>
+      <Card title="Godowns" to="/property" linkLabel="Open" cols={3} loading={counts.isLoading} error={counts.isError} onRetry={() => void counts.refetch()}>
+        <Stat label="Godowns" value={num(c?.activeProperties)} />
+        <Stat label="Occupied" value={num(c?.occupiedProperties)} />
+        <Stat label="Rent unpaid" value={money(c?.rentOutstandingPaise)} negative={(c?.rentOutstandingPaise ?? 0) > 0} />
+      </Card>
 
-      <Section title="Transport" to="/transport" linkLabel="Open transport" loading={counts.isLoading || transport.isLoading} error={counts.isError || transport.isError} onRetry={() => { void counts.refetch(); void transport.refetch() }}>
-        <Tile label="Active vehicles" value={num(c?.activeVehicles)} />
-        <Tile label="Trips this month" value={num(c?.tripsThisMonth)} hint="Not counting cancelled" />
-        <Tile label="Revenue" value={money(t?.revenue)} hint={periodLabel} />
-        <Tile label="Expenses" value={money(t?.expenses)} hint={periodLabel} />
-        <Tile label="Profit" value={money(t?.netProfit)} hint={`${periodLabel}, before loan repayments`} negative={(t?.netProfit ?? 0) < 0} />
-      </Section>
+      <Card title={`Transport · ${periodLabel}`} to="/transport" linkLabel="Open" cols={3} loading={counts.isLoading || transport.isLoading} error={counts.isError || transport.isError} onRetry={() => { void counts.refetch(); void transport.refetch() }}>
+        <Stat label="Vehicles" value={num(c?.activeVehicles)} hint="Active" />
+        <Stat label="Trips" value={num(c?.tripsThisMonth)} hint="This month" />
+        <Stat label="Profit" value={money(t?.netProfit)} hint="Before loan repayments" negative={(t?.netProfit ?? 0) < 0} />
+        <Stat label="Revenue" value={money(t?.revenue)} />
+        <Stat label="Expenses" value={money(t?.expenses)} />
+      </Card>
 
-      <Section title="Sheet rental" to="/sheets" linkLabel="Open sheet rental" loading={counts.isLoading} error={counts.isError} onRetry={() => void counts.refetch()}>
-        <Tile label="Total sheets" value={num(c?.sheetsTotal)} hint="Active sizes" />
-        <Tile label="Rented out" value={num(c?.sheetsRented)} />
-        <Tile label="Available" value={num(c?.sheetsAvailable)} hint={c && (c.sheetsDamaged > 0 || c.sheetsMissing > 0) ? `${c.sheetsDamaged} damaged, ${c.sheetsMissing} missing` : undefined} />
-        <Tile label="Overdue returns" value={num(c?.overdueRentals)} negative={(c?.overdueRentals ?? 0) > 0} />
-      </Section>
+      <Card title="Sheet rental" to="/sheets" linkLabel="Open" cols={3} loading={counts.isLoading} error={counts.isError} onRetry={() => void counts.refetch()}>
+        <Stat label="Total sheets" value={num(c?.sheetsTotal)} />
+        <Stat label="Rented out" value={num(c?.sheetsRented)} />
+        <Stat label="Available" value={num(c?.sheetsAvailable)} hint={c && (c.sheetsDamaged > 0 || c.sheetsMissing > 0) ? `${c.sheetsDamaged} damaged, ${c.sheetsMissing} missing` : undefined} />
+        <Stat label="Overdue returns" value={num(c?.overdueRentals)} negative={(c?.overdueRentals ?? 0) > 0} />
+      </Card>
 
-      <Section title="Gold loans" to="/gold-loans" linkLabel="Open gold loans" loading={gold.isLoading} error={gold.isError} onRetry={() => void gold.refetch()}>
-        <Tile label="Active bank loans" value={num(g?.activeLoans)} />
-        <Tile label="Amount borrowed" value={money(g?.borrowedPaise)} hint="Active loans" />
-        <Tile label="Accrued interest" value={money(g?.accruedInterestPaise)} hint="Simple interest to today" />
-        <Tile label="Estimated balance" value={money(g?.estimatedBalancePaise)} hint="Estimate, not the bank's figure" />
-      </Section>
+      <Card title="Gold loans" to="/gold-loans" linkLabel="Open" loading={gold.isLoading} error={gold.isError} onRetry={() => void gold.refetch()}>
+        <Stat label="Active bank loans" value={num(g?.activeLoans)} />
+        <Stat label="Amount borrowed" value={money(g?.borrowedPaise)} />
+        <Stat label="Accrued interest" value={money(g?.accruedInterestPaise)} hint="Simple interest to today" />
+        <Stat label="Estimated balance" value={money(g?.estimatedBalancePaise)} hint="Not the bank's figure" />
+      </Card>
 
       {g && g.upcoming.length > 0 && (
-        <section className="mt-4" aria-labelledby="dash-dues">
+        <section className="mt-3" aria-labelledby="dash-dues">
           <h3 id="dash-dues" className="mb-2 text-sm font-medium">Upcoming gold loan due dates</h3>
           <ul className="divide-y divide-line rounded-md border border-line bg-surface">
             {g.upcoming.slice(0, 5).map(({ loan, due }) => (

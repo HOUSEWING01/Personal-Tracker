@@ -71,3 +71,4 @@
 - [x] Apply brand palette 07 to theme + docs
 - [x] Phase 0 docs
 - [x] Phase 1 foundation and app shell
+- [ ] Vehicle maintenance (migration 0023): run it on the live database and a scratch PG, and add a SQL test (ledger posting and edit, `maintenance_due` latest-per-kind, `vehicle_profit_totals` maintenance column, RLS). Not yet run anywhere. Due reminders are by date only (no km-based due).
