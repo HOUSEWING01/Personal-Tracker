@@ -1,4 +1,5 @@
-import { useEffect, type ReactNode } from 'react'
+import { useEffect, useId, useState, type ReactNode } from 'react'
+import { CaretDown } from '@phosphor-icons/react'
 import { EmptyState } from '../../components/ui/EmptyState'
 import { buttonPrimary, buttonSecondary } from '../../components/ui/FullScreenMessage'
 import { AddButton } from '../../components/ui/AddButton'
@@ -38,7 +39,55 @@ interface Props<T> {
   onEdit: (row: T) => void
   /** Optional extra button(s) shown next to Edit in each row (e.g. "Payments"). */
   rowActions?: (row: T) => ReactNode
+  /** Phone cards only: when given, each card starts collapsed showing the title and this summary; tap to expand. */
+  collapsedSummary?: (row: T) => ReactNode
   emptyHint: string
+}
+
+/** One phone card. With a `summary` it is collapsible: the header is a button, the details and actions sit below. */
+function MobileCard<T>({ row, p }: { row: T; p: Props<T> }) {
+  const [open, setOpen] = useState(false)
+  const bodyId = useId()
+  const [first, ...rest] = p.columns
+  const collapsible = Boolean(p.collapsedSummary)
+  const expanded = !collapsible || open
+  return (
+    <li className="rounded-lg border border-line bg-surface p-4">
+      {collapsible ? (
+        <button
+          type="button" aria-expanded={open} aria-controls={bodyId} onClick={() => setOpen((o) => !o)}
+          aria-label={`${open ? 'Collapse' : 'Expand'} ${p.rowLabel(row)}`}
+          className="flex w-full items-start justify-between gap-3 rounded-md text-left"
+        >
+          <span className="min-w-0 flex-1 break-words font-medium">
+            {first?.cell(row)}
+            {!open && <span className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm">{p.collapsedSummary?.(row)}</span>}
+          </span>
+          <CaretDown size={18} aria-hidden className={`mt-1 shrink-0 text-primary transition-transform ${open ? 'rotate-180' : ''}`} />
+        </button>
+      ) : (
+        <div className="min-w-0 break-words font-medium">{first?.cell(row)}</div>
+      )}
+      {expanded && (
+        <div id={bodyId}>
+          {rest.length > 0 && (
+            <dl className="mt-3 grid grid-cols-2 gap-x-3 gap-y-2.5 border-t border-line pt-3 text-xs">
+              {rest.map((c) => (
+                <div key={c.header} className="min-w-0">
+                  <dt className="text-muted">{c.header}</dt>
+                  <dd className="mt-0.5 break-words text-sm font-medium tabular-nums">{c.cell(row)}</dd>
+                </div>
+              ))}
+            </dl>
+          )}
+          <div className="mt-3 grid auto-cols-fr grid-flow-col gap-2 border-t border-line pt-3">
+            {p.rowActions?.(row)}
+            <button type="button" className={buttonSecondary} aria-label={`Edit ${p.rowLabel(row)}`} onClick={() => p.onEdit(row)}>Edit</button>
+          </div>
+        </div>
+      )}
+    </li>
+  )
 }
 
 /**
@@ -55,7 +104,6 @@ export function MasterList<T>(p: Props<T>) {
     if (data && page > totalPages) onPage(totalPages)
   }, [data, page, totalPages, onPage])
 
-  const [first, ...rest] = p.columns
   const statusActive = p.status && p.status.value !== 'all' ? 1 : 0
   const activeCount = statusActive + (p.filterCount ?? 0) + (p.qText ? 1 : 0)
   const hasFilters = Boolean(p.status || p.filters)
@@ -136,25 +184,7 @@ export function MasterList<T>(p: Props<T>) {
             </div>
 
             <ul className="flex flex-col gap-2.5 md:hidden">
-              {rows.map((r) => (
-                <li key={p.rowKey(r)} className="rounded-lg border border-line bg-surface p-4">
-                  <div className="min-w-0 break-words font-medium">{first?.cell(r)}</div>
-                  {rest.length > 0 && (
-                    <dl className="mt-3 grid grid-cols-2 gap-x-3 gap-y-2.5 border-t border-line pt-3 text-xs">
-                      {rest.map((c) => (
-                        <div key={c.header} className="min-w-0">
-                          <dt className="text-muted">{c.header}</dt>
-                          <dd className="mt-0.5 break-words text-sm font-medium tabular-nums">{c.cell(r)}</dd>
-                        </div>
-                      ))}
-                    </dl>
-                  )}
-                  <div className="mt-3 grid auto-cols-fr grid-flow-col gap-2 border-t border-line pt-3">
-                    {p.rowActions?.(r)}
-                    <button type="button" className={buttonSecondary} aria-label={`Edit ${p.rowLabel(r)}`} onClick={() => p.onEdit(r)}>Edit</button>
-                  </div>
-                </li>
-              ))}
+              {rows.map((r) => <MobileCard key={p.rowKey(r)} row={r} p={p} />)}
             </ul>
 
             <Pagination page={p.page} pageSize={TRANSPORT_PAGE_SIZE} total={total} onPage={p.onPage} noun={`${p.noun}s`} />

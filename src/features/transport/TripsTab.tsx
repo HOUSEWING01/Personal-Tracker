@@ -28,6 +28,18 @@ const columns: Column<Trip>[] = [
   { header: 'Status', cell: (t) => <Pill tone={t.status === 'completed' ? 'good' : 'neutral'}>{TRIP_STATUS_LABELS[t.status]}</Pill> },
 ]
 
+/** Shown on a collapsed phone card: revenue, operating profit and status at a glance. */
+function tripSummary(t: Trip) {
+  const profit = tripOperatingProfitPaise(t)
+  return (
+    <>
+      <span className="tabular-nums">{formatINR(tripRevenuePaise(t))}</span>
+      <span className={`tabular-nums ${profit < 0 ? 'text-danger' : 'text-muted'}`}>Profit {profit < 0 ? '−' : ''}{formatINR(Math.abs(profit))}</span>
+      <Pill tone={t.status === 'completed' ? 'good' : 'neutral'}>{TRIP_STATUS_LABELS[t.status]}</Pill>
+    </>
+  )
+}
+
 export function TripsTab() {
   const c = useListControls()
   const status = (TRIP_STATUSES as readonly string[]).includes(c.status) ? (c.status as TripStatus) : undefined
@@ -45,7 +57,7 @@ export function TripsTab() {
         page={c.page} onPage={c.setPage} qText={c.qText} onSearch={c.setQText} searchLabel="Search by place or notes"
         status={{ value: status ?? 'all', onChange: c.setStatus, options: TRIP_STATUSES.map((s) => ({ value: s, label: TRIP_STATUS_LABELS[s] })) }}
         filtered={Boolean(status || vehicleId || c.q)} onClear={c.clear}
-        onAdd={() => setDialog({})} onEdit={(trip) => setDialog({ trip })}
+        onAdd={() => setDialog({})} onEdit={(trip) => setDialog({ trip })} collapsedSummary={tripSummary}
         emptyHint="Add a trip with its vehicle, driver, customer, distance and rate. Completed trips post to Finance."
       />
     </>
