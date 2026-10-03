@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { NavLink, Outlet, ScrollRestoration, useLocation } from 'react-router-dom'
-import { ArrowsLeftRight, Buildings, CaretDoubleLeft, CaretDoubleRight, DotsThreeOutline, SquaresFour, Truck, X, type Icon } from '@phosphor-icons/react'
+import { Buildings, Coins, CaretDoubleLeft, CaretDoubleRight, DotsThreeOutline, SquaresFour, Truck, X, type Icon } from '@phosphor-icons/react'
 import { ALL_NAV_ITEMS, NAV } from '../../lib/navigation'
 import { InstallAppBanner } from './InstallApp'
 import { SignOutButton } from './SignOutButton'
@@ -12,7 +12,7 @@ const TABS: { to: string; label: string; icon: Icon }[] = [
   { to: '/', label: 'Home', icon: SquaresFour },
   { to: '/property', label: 'Godowns', icon: Buildings },
   { to: '/transport', label: 'Transport', icon: Truck },
-  { to: '/finance', label: 'Money', icon: ArrowsLeftRight },
+  { to: '/gold-loans', label: 'Gold loans', icon: Coins },
 ]
 
 function NavList({ onNavigate, collapsed = false }: { onNavigate?: () => void; collapsed?: boolean }) {
