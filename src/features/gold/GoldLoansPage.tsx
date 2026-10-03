@@ -3,7 +3,7 @@ import { PageHeader } from '../../components/ui/PageHeader'
 import { buttonSecondary } from '../../components/ui/FullScreenMessage'
 import { formatDate, todayIST } from '../../lib/dates'
 import { formatINR } from '../../lib/money'
-import { accruedInterestPaise } from '../../services/goldInterest'
+import { accruedInterestPaise, daysBetween, interestDays, interestToDueDatePaise } from '../../services/goldInterest'
 import { GOLD_LOAN_STATUSES, type GoldLoan, type GoldLoanStatus } from '../../types/gold'
 import { MasterList, type Column } from '../transport/MasterList'
 import { useListControls } from '../transport/useListControls'
@@ -32,7 +32,17 @@ function buildColumns(today: string): Column<GoldLoan>[] {
     { header: 'Received', align: 'right', cell: (l) => <span className="font-medium">{formatINR(l.principalPaise)}</span> },
     {
       header: 'Interest so far', align: 'right',
-      cell: (l) => (<>{formatINR(accruedInterestPaise(l, today))}<div className="text-xs font-normal text-muted">{l.annualRate}% a year</div></>),
+      cell: (l) => {
+        const days = interestDays(l, today)
+        const full = interestToDueDatePaise(l)
+        return (
+          <>
+            {formatINR(accruedInterestPaise(l, today))}
+            <div className="text-xs font-normal text-muted">{l.annualRate}% a year · {days} {days === 1 ? 'day' : 'days'}</div>
+            {full !== null && l.dueDate && <div className="text-xs font-normal text-muted">Till due date {formatINR(full)} ({daysBetween(l.pledgeDate, l.dueDate)} days)</div>}
+          </>
+        )
+      },
     },
     {
       header: 'Repaid so far', align: 'right',

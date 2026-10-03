@@ -110,10 +110,6 @@ export function DashboardPage() {
             <Stat label="Total revenue" value={money(overall?.revenue)} />
             <Stat label="Total profit" value={money(overall?.netProfit)} negative={(overall?.netProfit ?? 0) < 0} />
             <Stat label="Total debt" value={money(debt?.totalPaise)} hint="Estimate" />
-            <div className="col-span-3 mt-3 grid grid-cols-2 gap-x-3 border-t border-line pt-3">
-              <Stat label="Debt · vehicle loans" value={money(debt?.vehiclePaise)} hint="Received − repaid" />
-              <Stat label="Debt · gold loans" value={money(debt?.goldPaise)} hint="Active, with interest" />
-            </div>
           </dl>
         )}
       </section>

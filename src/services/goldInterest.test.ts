@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { accruedInterestPaise, daysBetween, interestToDueDatePaise, simpleInterestPaise } from './goldInterest'
+import { accruedInterestPaise, daysBetween, interestDays, interestToDueDatePaise, simpleInterestPaise } from './goldInterest'
 import { dueState, estimatedBalancePaise } from '../features/gold/goldEngine'
 
 const loan = { principalPaise: 10_000_000, annualRate: 12, pledgeDate: '2026-01-01', dueDate: '2027-01-01', status: 'active' as const, closedDate: null }
@@ -39,5 +39,21 @@ describe('gold loan interest', () => {
     expect(dueState(loan, '2026-06-01')).toBeNull()
     expect(dueState({ ...loan, status: 'closed' }, '2027-01-05')).toBeNull()
     expect(dueState({ ...loan, dueDate: null }, '2027-01-05')).toBeNull()
+  })
+})
+
+describe('interestDays', () => {
+  it('counts from the pledge date to today for an active loan', () => {
+    expect(interestDays(loan, '2026-01-31')).toBe(30)
+  })
+  it('stops at the closing date for a closed loan, and never goes below zero', () => {
+    expect(interestDays({ ...loan, status: 'closed', closedDate: '2026-02-01' }, '2026-06-01')).toBe(31)
+    expect(interestDays(loan, '2025-12-01')).toBe(0)
+  })
+  it('matches the interest figure: Rs 1,10,000 at 0.8% for 292 days is Rs 704', () => {
+    const l = { principalPaise: 11_000_000, annualRate: 0.8, pledgeDate: '2025-12-15', dueDate: '2026-11-14', status: 'active' as const, closedDate: null }
+    expect(interestDays(l, '2026-10-03')).toBe(292)
+    expect(accruedInterestPaise(l, '2026-10-03')).toBe(70_400)
+    expect(interestToDueDatePaise(l)).toBe(80_526)
   })
 })

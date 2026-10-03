@@ -46,6 +46,11 @@ export function interestEndDate(loan: Pick<InterestLoan, 'status' | 'closedDate'
   return end < loan.pledgeDate ? loan.pledgeDate : end
 }
 
+/** Days interest has run: pledge date to today (active) or to the closing date (closed / released). */
+export function interestDays(loan: Pick<InterestLoan, 'status' | 'closedDate' | 'pledgeDate'>, today: string): number {
+  return daysBetween(loan.pledgeDate, interestEndDate(loan, today))
+}
+
 /** Interest accrued from the pledge date to today (active) or to the closing date (closed / released). */
 export function accruedInterestPaise(loan: InterestLoan, today: string): Paise {
   const days = daysBetween(loan.pledgeDate, interestEndDate(loan, today))
